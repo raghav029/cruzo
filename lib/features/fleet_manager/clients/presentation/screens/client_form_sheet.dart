@@ -1,0 +1,254 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_text_styles.dart';
+import '../../domain/corporate_client.dart';
+import '../bloc/client_bloc.dart';
+import '../bloc/client_event.dart';
+
+class ClientFormSheet extends StatefulWidget {
+  final CorporateClient? client;
+  const ClientFormSheet({super.key, this.client});
+
+  static Future<void> show(BuildContext context, {CorporateClient? client}) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: context.read<ClientBloc>(),
+        child: ClientFormSheet(client: client),
+      ),
+    );
+  }
+
+  @override
+  State<ClientFormSheet> createState() => _ClientFormSheetState();
+}
+
+class _ClientFormSheetState extends State<ClientFormSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _name;
+  late final TextEditingController _gst;
+  late final TextEditingController _address;
+  late final TextEditingController _email;
+  late final TextEditingController _creditLimit;
+  String _billingCycle = 'MONTHLY';
+  bool _active = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final c = widget.client;
+    _name = TextEditingController(text: c?.companyName ?? '');
+    _gst = TextEditingController(text: c?.gstNumber ?? '');
+    _address = TextEditingController(text: c?.billingAddress ?? '');
+    _email = TextEditingController(text: c?.billingEmail ?? '');
+    _creditLimit = TextEditingController(
+        text: c != null && c.creditLimit > 0 ? c.creditLimit.toStringAsFixed(0) : '');
+    _billingCycle = c?.billingCycle ?? 'MONTHLY';
+    _active = c?.active ?? true;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _gst.dispose();
+    _address.dispose();
+    _email.dispose();
+    _creditLimit.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final data = {
+      'companyName': _name.text.trim(),
+      if (_gst.text.isNotEmpty) 'gstNumber': _gst.text.trim(),
+      if (_address.text.isNotEmpty) 'billingAddress': _address.text.trim(),
+      'billingEmail': _email.text.trim(),
+      'billingCycle': _billingCycle,
+      'creditLimit': double.tryParse(_creditLimit.text.trim()) ?? 0,
+      if (widget.client != null) 'active': _active,
+    };
+    if (widget.client == null) {
+      context.read<ClientBloc>().add(ClientCreateRequested(data));
+    } else {
+      context.read<ClientBloc>().add(ClientUpdateRequested(widget.client!.id, data));
+    }
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEdit = widget.client != null;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.88,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  Text(isEdit ? 'Edit Client' : 'Add Client', style: AppTextStyles.h3),
+                  const Spacer(),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: controller,
+                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _field('Company Name', _name, required: true),
+                      const SizedBox(height: 16),
+                      _field('GST Number', _gst, hint: 'e.g. 27AAPFU0939F1ZV'),
+                      const SizedBox(height: 16),
+                      _field('Billing Email', _email, required: true,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Billing email is required';
+                            if (!v.contains('@')) return 'Enter valid email';
+                            return null;
+                          }),
+                      const SizedBox(height: 16),
+                      _field('Billing Address', _address, hint: 'Full billing address', maxLines: 2),
+                      const SizedBox(height: 16),
+                      _field('Credit Limit (₹)', _creditLimit, hint: '0',
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (v) {
+                            if (v != null && v.isNotEmpty && double.tryParse(v) == null) {
+                              return 'Enter valid amount';
+                            }
+                            return null;
+                          }),
+                      const SizedBox(height: 16),
+                      _label('Billing Cycle'),
+                      const SizedBox(height: 8),
+                      _cycleSelector(),
+                      if (isEdit) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Account Active', style: AppTextStyles.label),
+                                Text('Employees can book when active', style: AppTextStyles.caption),
+                              ],
+                            ),
+                            Switch(
+                              value: _active,
+                              onChanged: (v) => setState(() => _active = v),
+                              activeColor: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 28),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Text(isEdit ? 'Save Changes' : 'Add Client',
+                              style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cycleSelector() {
+    return Row(
+      children: ['MONTHLY', 'WEEKLY'].map((c) {
+        final selected = _billingCycle == c;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _billingCycle = c),
+            child: Container(
+              margin: EdgeInsets.only(right: c == 'MONTHLY' ? 10 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primary : AppColors.grey100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: selected ? AppColors.primary : AppColors.grey200),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                c == 'MONTHLY' ? 'Monthly' : 'Weekly',
+                style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.white : AppColors.grey600,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _label(String text) => Text(text, style: AppTextStyles.label);
+
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    String? hint,
+    bool required = false,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(label),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary)),
+          ),
+          validator: validator ?? (required ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null : null),
+        ),
+      ],
+    );
+  }
+}

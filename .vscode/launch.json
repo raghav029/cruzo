@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "cruzo: Fleet (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_fleet.dart",
+      "deviceId": "chrome",
+      "args": [
+        "--dart-define-from-file=env.json"
+      ]
+    }
+  ]
+}
