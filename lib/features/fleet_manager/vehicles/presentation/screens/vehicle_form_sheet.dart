@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/vehicle.dart';
 import '../bloc/vehicle_bloc.dart';
 import '../bloc/vehicle_event.dart';
@@ -47,8 +46,10 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     _year = TextEditingController(text: v?.year.toString() ?? '');
     _color = TextEditingController(text: v?.color ?? '');
     _vehicleType = v?.vehicleType ?? 'SEDAN';
-    if (v?.insuranceExpiry != null) _insuranceExpiry = DateTime.parse(v!.insuranceExpiry!);
-    if (v?.fitnessExpiry != null) _fitnessExpiry = DateTime.parse(v!.fitnessExpiry!);
+    if (v?.insuranceExpiry != null)
+      _insuranceExpiry = DateTime.parse(v!.insuranceExpiry!);
+    if (v?.fitnessExpiry != null)
+      _fitnessExpiry = DateTime.parse(v!.fitnessExpiry!);
   }
 
   @override
@@ -70,13 +71,17 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
       'model': _model.text.trim(),
       'year': int.parse(_year.text.trim()),
       if (_color.text.isNotEmpty) 'color': _color.text.trim(),
-      if (_insuranceExpiry != null) 'insuranceExpiry': _insuranceExpiry!.toIso8601String().split('T').first,
-      if (_fitnessExpiry != null) 'fitnessExpiry': _fitnessExpiry!.toIso8601String().split('T').first,
+      if (_insuranceExpiry != null)
+        'insuranceExpiry': _insuranceExpiry!.toIso8601String().split('T').first,
+      if (_fitnessExpiry != null)
+        'fitnessExpiry': _fitnessExpiry!.toIso8601String().split('T').first,
     };
     if (widget.vehicle == null) {
       context.read<VehicleBloc>().add(VehicleCreateRequested(data));
     } else {
-      context.read<VehicleBloc>().add(VehicleUpdateRequested(widget.vehicle!.id, data));
+      context.read<VehicleBloc>().add(
+        VehicleUpdateRequested(widget.vehicle!.id, data),
+      );
     }
     Navigator.pop(context);
   }
@@ -90,8 +95,10 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     );
     if (picked != null) {
       setState(() {
-        if (isInsurance) _insuranceExpiry = picked;
-        else _fitnessExpiry = picked;
+        if (isInsurance)
+          _insuranceExpiry = picked;
+        else
+          _fitnessExpiry = picked;
       });
     }
   }
@@ -105,58 +112,105 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
       minChildSize: 0.5,
       builder: (_, controller) => Container(
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.darkBg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
             const SizedBox(height: 12),
             Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2)),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.darkBg3,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 children: [
-                  Text(isEdit ? 'Edit Vehicle' : 'Add Vehicle', style: AppTextStyles.h3),
+                  Text(
+                    isEdit ? 'Edit Vehicle' : 'Add Vehicle',
+                    style: AppTextStyles.h3.copyWith(color: AppColors.darkFg0),
+                  ),
                   const Spacer(),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
             ),
             Expanded(
               child: SingleChildScrollView(
                 controller: controller,
-                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  8,
+                  20,
+                  MediaQuery.of(context).viewInsets.bottom + 24,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _field('Plate Number', _plate, hint: 'e.g. MH12AB1234', required: true),
+                      _field(
+                        'Plate Number',
+                        _plate,
+                        hint: 'e.g. MH12AB1234',
+                        required: true,
+                      ),
                       const SizedBox(height: 16),
                       _label('Vehicle Type'),
                       const SizedBox(height: 8),
                       _typeSelector(),
                       const SizedBox(height: 16),
-                      Row(children: [
-                        Expanded(child: _field('Make', _make, hint: 'e.g. Toyota', required: true)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _field('Model', _model, hint: 'e.g. Camry', required: true)),
-                      ]),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _field(
+                              'Make',
+                              _make,
+                              hint: 'e.g. Toyota',
+                              required: true,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field(
+                              'Model',
+                              _model,
+                              hint: 'e.g. Camry',
+                              required: true,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
-                      Row(children: [
-                        Expanded(child: _field('Year', _year, hint: '2023', keyboardType: TextInputType.number,
-                          validator: (v) {
-                            final y = int.tryParse(v ?? '');
-                            if (y == null || y < 2000 || y > 2100) return 'Enter valid year';
-                            return null;
-                          },
-                        )),
-                        const SizedBox(width: 12),
-                        Expanded(child: _field('Color', _color, hint: 'e.g. White')),
-                      ]),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _field(
+                              'Year',
+                              _year,
+                              hint: '2023',
+                              keyboardType: TextInputType.number,
+                              validator: (v) {
+                                final y = int.tryParse(v ?? '');
+                                if (y == null || y < 2000 || y > 2100)
+                                  return 'Enter valid year';
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field('Color', _color, hint: 'e.g. White'),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       _label('Insurance Expiry'),
                       const SizedBox(height: 8),
@@ -172,11 +226,18 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                         child: ElevatedButton(
                           onPressed: _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            backgroundColor: AppColors.accent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadii.md),
+                            ),
                           ),
-                          child: Text(isEdit ? 'Save Changes' : 'Add Vehicle',
-                              style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                          child: Text(
+                            isEdit ? 'Save Changes' : 'Add Vehicle',
+                            style: const TextStyle(
+                              color: AppColors.accentFg,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -202,15 +263,19 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
               margin: EdgeInsets.only(right: t != types.last ? 8 : 0),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.grey100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: selected ? AppColors.primary : AppColors.grey200),
+                color: selected ? AppColors.accent : AppColors.darkBg3,
+                borderRadius: BorderRadius.circular(AppRadii.sm),
+                border: Border.all(
+                  color: selected ? AppColors.accent : AppColors.darkLine,
+                ),
               ),
               alignment: Alignment.center,
-              child: Text(t,
+              child: Text(
+                t,
                 style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.white : AppColors.grey600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.accentFg : AppColors.darkFg2,
                 ),
               ),
             ),
@@ -226,19 +291,26 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.grey300),
-          borderRadius: BorderRadius.circular(8),
-          color: AppColors.white,
+          border: Border.all(color: AppColors.darkLine),
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          color: AppColors.darkBg3,
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.grey400),
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 16,
+              color: AppColors.darkFg3,
+            ),
             const SizedBox(width: 10),
             Text(
               date != null
                   ? '${date.day}/${date.month}/${date.year}'
                   : 'Select date',
-              style: TextStyle(color: date != null ? AppColors.grey900 : AppColors.grey400, fontSize: 14),
+              style: TextStyle(
+                color: date != null ? AppColors.darkFg0 : AppColors.darkFg3,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -246,7 +318,8 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     );
   }
 
-  Widget _label(String text) => Text(text, style: AppTextStyles.label);
+  Widget _label(String text) =>
+      Text(text, style: AppTextStyles.label.copyWith(color: AppColors.darkFg2));
 
   Widget _field(
     String label,
@@ -266,13 +339,18 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 13,
+            ),
           ),
-          validator: validator ?? (required ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null : null),
+          validator:
+              validator ??
+              (required
+                  ? (v) => (v == null || v.trim().isEmpty)
+                        ? '$label is required'
+                        : null
+                  : null),
         ),
       ],
     );

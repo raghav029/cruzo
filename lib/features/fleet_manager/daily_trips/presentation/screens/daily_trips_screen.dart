@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/network/result.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../../../../core/di/injection.dart';
-import '../../../bookings/data/booking_repository.dart';
+import '../../../bookings/domain/booking_repo.dart';
 import '../../../bookings/domain/booking.dart';
 import '../../../bookings/presentation/screens/booking_detail_sheet.dart';
 import '../../../bookings/presentation/bloc/booking_bloc.dart';
-import '../../../bookings/presentation/bloc/booking_event.dart';
 
 class DailyTripsScreen extends StatefulWidget {
   const DailyTripsScreen({super.key});
@@ -38,12 +36,19 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
     _load();
   }
 
-  String _dateParam(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  String _dateParam(DateTime d) {
+    final y = d.year.toString().padLeft(4, '0');
+    final mo = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${y}-${mo}-${day}T00:00:00Z';
+  }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    final repo = getIt<BookingRepository>();
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final repo = getIt<BookingRepo>();
     final from = _dateParam(_selectedDate);
     final to = _dateParam(_selectedDate.add(const Duration(days: 1)));
     final result = await repo.list(fromDate: from, toDate: to, size: 100);
@@ -52,25 +57,31 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
       case Success(:final value):
         setState(() {
           _loading = false;
-          _bookings = value
-              .where((b) => _activeStatuses.contains(b.status))
-              .toList()
-            ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+          _bookings =
+              value.where((b) => _activeStatuses.contains(b.status)).toList()
+                ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
         });
       case Failure(:final message):
-        setState(() { _loading = false; _error = message; });
+        setState(() {
+          _loading = false;
+          _error = message;
+        });
     }
   }
 
   void _prevDay() {
-    setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1)));
+    setState(
+      () => _selectedDate = _selectedDate.subtract(const Duration(days: 1)),
+    );
     _load();
   }
 
   void _nextDay() {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     if (_selectedDate.isBefore(tomorrow)) {
-      setState(() => _selectedDate = _selectedDate.add(const Duration(days: 1)));
+      setState(
+        () => _selectedDate = _selectedDate.add(const Duration(days: 1)),
+      );
       _load();
     }
   }
@@ -100,13 +111,34 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
     if (_selectedDate.year == yesterday.year &&
         _selectedDate.month == yesterday.month &&
-        _selectedDate.day == yesterday.day) return 'Yesterday';
-    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        _selectedDate.day == yesterday.day)
+      return 'Yesterday';
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${_selectedDate.day} ${months[_selectedDate.month - 1]} ${_selectedDate.year}';
   }
 
   Map<String, List<Booking>> get _grouped {
-    final order = ['IN_PROGRESS', 'DRIVER_EN_ROUTE', 'ARRIVED', 'DRIVER_ASSIGNED', 'APPROVED', 'COMPLETED'];
+    final order = [
+      'IN_PROGRESS',
+      'DRIVER_EN_ROUTE',
+      'ARRIVED',
+      'DRIVER_ASSIGNED',
+      'APPROVED',
+      'COMPLETED',
+    ];
     final map = <String, List<Booking>>{};
     for (final b in _bookings) {
       map.putIfAbsent(b.status, () => []).add(b);
@@ -125,21 +157,27 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
       child: BlocListener<BookingBloc, dynamic>(
         listener: (context, state) => _load(),
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.darkBg1,
           body: CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: _Header(
-                label: _headerLabel(),
-                isToday: _isToday,
-                onPrev: _prevDay,
-                onNext: _nextDay,
-                onTap: _pickDate,
-                tripCount: _bookings.length,
-              )),
+              SliverToBoxAdapter(
+                child: _Header(
+                  label: _headerLabel(),
+                  isToday: _isToday,
+                  onPrev: _prevDay,
+                  onNext: _nextDay,
+                  onTap: _pickDate,
+                  tripCount: _bookings.length,
+                ),
+              ),
               if (_loading)
-                const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (_error != null)
-                SliverFillRemaining(child: _ErrorView(message: _error!, onRetry: _load))
+                SliverFillRemaining(
+                  child: _ErrorView(message: _error!, onRetry: _load),
+                )
               else if (_bookings.isEmpty)
                 SliverFillRemaining(child: _EmptyView(isToday: _isToday))
               else
@@ -152,16 +190,25 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
                         int idx = 0;
                         for (final entry in groups) {
                           if (i == idx) {
-                            return _GroupHeader(status: entry.key, count: entry.value.length);
+                            return _GroupHeader(
+                              status: entry.key,
+                              count: entry.value.length,
+                            );
                           }
                           idx++;
                           for (final booking in entry.value) {
                             if (i == idx) {
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
-                                child: _TripCard(booking: booking, onTap: () {
-                                  BookingDetailSheet.show(context, booking: booking);
-                                }),
+                                child: _TripCard(
+                                  booking: booking,
+                                  onTap: () {
+                                    BookingDetailSheet.show(
+                                      context,
+                                      booking: booking,
+                                    );
+                                  },
+                                ),
                               );
                             }
                             idx++;
@@ -169,7 +216,10 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
                         }
                         return null;
                       },
-                      childCount: _grouped.entries.fold(0, (sum, e) => sum + 1 + e.value.length),
+                      childCount: _grouped.entries.fold(
+                        0,
+                        (sum, e) => sum! + 1 + e.value.length,
+                      ),
                     ),
                   ),
                 ),
@@ -210,45 +260,59 @@ class _Header extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Daily Trips', style: AppTextStyles.h2),
-                  Text('$tripCount active trips', style: AppTextStyles.bodySm),
+                  Text(
+                    'Daily Trips',
+                    style: AppTextStyles.h2.copyWith(color: AppColors.darkFg0),
+                  ),
+                  Text(
+                    '$tripCount active trips',
+                    style: AppTextStyles.bodySm.copyWith(
+                      color: AppColors.darkFg2,
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: AppColors.grey600),
+                icon: const Icon(Icons.chevron_left, color: AppColors.darkFg2),
                 onPressed: onPrev,
                 padding: EdgeInsets.zero,
               ),
               GestureDetector(
                 onTap: onTap,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: isToday ? AppColors.primaryLight : AppColors.grey100,
+                    color: isToday ? AppColors.accentBg : AppColors.darkBg3,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isToday ? AppColors.primary : AppColors.grey200,
+                      color: isToday ? AppColors.accent : AppColors.darkLine,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 13,
-                          color: isToday ? AppColors.primary : AppColors.grey600),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 13,
+                        color: isToday ? AppColors.accent : AppColors.darkFg2,
+                      ),
                       const SizedBox(width: 6),
-                      Text(label,
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isToday ? AppColors.primary : AppColors.grey700)),
+                      Text(
+                        label,
+                        style: AppTextStyles.h4.copyWith(
+                          color: isToday ? AppColors.accent : AppColors.darkFg1,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: AppColors.grey600),
+                icon: const Icon(Icons.chevron_right, color: AppColors.darkFg2),
                 onPressed: onNext,
                 padding: EdgeInsets.zero,
               ),
@@ -268,25 +332,36 @@ class _GroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'IN_PROGRESS'     => ('In Progress', AppColors.success),
-      'DRIVER_EN_ROUTE' => ('En Route', AppColors.primary),
-      'ARRIVED'         => ('Arrived', AppColors.primary),
+      'IN_PROGRESS' => ('In Progress', AppColors.good),
+      'DRIVER_EN_ROUTE' => ('En Route', AppColors.accent),
+      'ARRIVED' => ('Arrived', AppColors.accent),
       'DRIVER_ASSIGNED' => ('Assigned', AppColors.info),
-      'APPROVED'        => ('Approved — Awaiting Dispatch', AppColors.warning),
-      'COMPLETED'       => ('Completed', AppColors.grey500),
-      _                 => (status, AppColors.grey500),
+      'APPROVED' => ('Approved — Awaiting Dispatch', AppColors.warn),
+      'COMPLETED' => ('Completed', AppColors.darkFg2),
+      _ => (status, AppColors.darkFg2),
     };
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
       child: Row(
         children: [
-          Container(width: 8, height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
           const SizedBox(width: 8),
-          Text(label,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+          Text(
+            label,
+            style: AppTextStyles.bodySm.copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
           const SizedBox(width: 6),
-          Text('$count', style: TextStyle(fontSize: 12, color: color.withAlpha(180))),
+          Text(
+            '$count',
+            style: AppTextStyles.bodySm.copyWith(color: color.withAlpha(128)),
+          ),
         ],
       ),
     );
@@ -300,7 +375,8 @@ class _TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLive = booking.status == 'IN_PROGRESS' ||
+    final isLive =
+        booking.status == 'IN_PROGRESS' ||
         booking.status == 'DRIVER_EN_ROUTE' ||
         booking.status == 'ARRIVED';
 
@@ -309,12 +385,10 @@ class _TripCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.darkBg2,
+          borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(
-            color: isLive
-                ? AppColors.success.withAlpha(80)
-                : AppColors.grey200,
+            color: isLive ? AppColors.good.withAlpha(80) : AppColors.darkLine,
             width: isLive ? 1.5 : 1,
           ),
         ),
@@ -328,15 +402,18 @@ class _TripCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     booking.corporateClientName ?? 'Unknown Client',
-                    style: AppTextStyles.h4,
+                    style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isLive)
                   Container(
-                    width: 8, height: 8,
+                    width: 8,
+                    height: 8,
                     decoration: const BoxDecoration(
-                      color: AppColors.success, shape: BoxShape.circle),
+                      color: AppColors.good,
+                      shape: BoxShape.circle,
+                    ),
                   ),
               ],
             ),
@@ -344,22 +421,45 @@ class _TripCard extends StatelessWidget {
             _RouteRow(pickup: booking.pickupAddress, drop: booking.dropAddress),
             if (booking.driverName != null) ...[
               const SizedBox(height: 10),
-              const Divider(height: 1, color: AppColors.grey100),
+              const Divider(height: 1, color: AppColors.darkLine),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.person_outline, size: 14, color: AppColors.grey400),
+                  const Icon(
+                    Icons.person_outline,
+                    size: 14,
+                    color: AppColors.darkFg3,
+                  ),
                   const SizedBox(width: 4),
-                  Text(booking.driverName!, style: AppTextStyles.caption),
+                  Text(
+                    booking.driverName!,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.darkFg2,
+                    ),
+                  ),
                   if (booking.vehiclePlate != null) ...[
                     const SizedBox(width: 12),
-                    const Icon(Icons.directions_car_outlined, size: 14, color: AppColors.grey400),
+                    const Icon(
+                      Icons.directions_car_outlined,
+                      size: 14,
+                      color: AppColors.darkFg3,
+                    ),
                     const SizedBox(width: 4),
-                    Text(booking.vehiclePlate!, style: AppTextStyles.caption),
+                    Text(
+                      booking.vehiclePlate!,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.darkFg2,
+                      ),
+                    ),
                   ],
                   const Spacer(),
                   if (booking.employeeName != null)
-                    Text(booking.employeeName!, style: AppTextStyles.caption),
+                    Text(
+                      booking.employeeName!,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.darkFg2,
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -388,10 +488,16 @@ class _TimeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-          color: AppColors.grey100, borderRadius: BorderRadius.circular(6)),
-      child: Text(label,
-          style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.grey700)),
+        color: AppColors.darkBg3,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.bodySm.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkFg1,
+        ),
+      ),
     );
   }
 }
@@ -408,12 +514,23 @@ class _RouteRow extends StatelessWidget {
       children: [
         Column(
           children: [
-            Container(width: 7, height: 7,
-                decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
-            Container(width: 1, height: 18, color: AppColors.grey200),
-            Container(width: 7, height: 7,
-                decoration: BoxDecoration(
-                    color: AppColors.error, borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 7,
+              height: 7,
+              decoration: const BoxDecoration(
+                color: AppColors.good,
+                shape: BoxShape.circle,
+              ),
+            ),
+            Container(width: 1, height: 18, color: AppColors.darkLine),
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: AppColors.bad,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ],
         ),
         const SizedBox(width: 10),
@@ -421,9 +538,19 @@ class _RouteRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(pickup, style: AppTextStyles.bodySm, overflow: TextOverflow.ellipsis, maxLines: 1),
+              Text(
+                pickup,
+                style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               const SizedBox(height: 10),
-              Text(drop, style: AppTextStyles.bodySm, overflow: TextOverflow.ellipsis, maxLines: 1),
+              Text(
+                drop,
+                style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ],
           ),
         ),
@@ -442,12 +569,22 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.directions_car_outlined, size: 56, color: AppColors.grey300),
+          Icon(
+            Icons.directions_car_outlined,
+            size: 56,
+            color: AppColors.darkFg3,
+          ),
           const SizedBox(height: 12),
-          Text('No trips ${isToday ? 'today' : 'on this day'}', style: AppTextStyles.h4),
+          Text(
+            'No trips ${isToday ? 'today' : 'on this day'}',
+            style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0),
+          ),
           const SizedBox(height: 4),
-          Text('Active trips will appear here once assigned.',
-              style: AppTextStyles.bodySm, textAlign: TextAlign.center),
+          Text(
+            'Active trips will appear here once assigned.',
+            style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -465,9 +602,13 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.bad),
           const SizedBox(height: 12),
-          Text(message, style: AppTextStyles.body, textAlign: TextAlign.center),
+          Text(
+            message,
+            style: AppTextStyles.body.copyWith(color: AppColors.darkFg1),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],

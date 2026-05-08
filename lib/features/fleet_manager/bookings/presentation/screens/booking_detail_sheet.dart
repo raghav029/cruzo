@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/di/injection.dart';
 import '../../../../../core/network/result.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../../drivers/domain/driver_repo.dart';
 import '../../../vehicles/domain/vehicle_repo.dart';
 import '../../domain/booking.dart';
@@ -44,7 +43,7 @@ class BookingDetailSheet extends StatelessWidget {
       minChildSize: 0.4,
       builder: (_, controller) => Container(
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.darkBg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -54,7 +53,7 @@ class BookingDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey300,
+                color: AppColors.darkBg3,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -62,7 +61,7 @@ class BookingDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
               child: Row(
                 children: [
-                  Text('Booking Details', style: AppTextStyles.h3),
+                  Text('Booking Details', style: AppTextStyles.h3.copyWith(color: AppColors.darkFg0)),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -248,9 +247,9 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Assign Driver & Vehicle', style: AppTextStyles.h4),
+        Text('Assign Driver & Vehicle', style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0)),
         const SizedBox(height: 14),
-        Text('Available Drivers', style: AppTextStyles.label),
+        Text('Available Drivers', style: AppTextStyles.label.copyWith(color: AppColors.darkFg2)),
         const SizedBox(height: 8),
         if (_drivers.isEmpty)
           _emptyChip('No available drivers')
@@ -271,10 +270,10 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : AppColors.grey50,
-                    borderRadius: BorderRadius.circular(8),
+                    color: selected ? AppColors.accent : AppColors.darkBg3,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                     border: Border.all(
-                      color: selected ? AppColors.primary : AppColors.grey200,
+                      color: selected ? AppColors.accent : AppColors.darkLine,
                     ),
                   ),
                   child: Column(
@@ -285,7 +284,7 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: selected ? AppColors.white : AppColors.grey800,
+                          color: selected ? AppColors.accentFg : AppColors.darkFg0,
                         ),
                       ),
                       Text(
@@ -293,8 +292,8 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                         style: TextStyle(
                           fontSize: 11,
                           color: selected
-                              ? AppColors.white.withOpacity(0.8)
-                              : AppColors.grey500,
+                              ? AppColors.darkFg2
+                              : AppColors.darkFg2,
                         ),
                       ),
                     ],
@@ -304,7 +303,7 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
             }).toList(),
           ),
         const SizedBox(height: 16),
-        Text('Available Vehicles', style: AppTextStyles.label),
+        Text('Available Vehicles', style: AppTextStyles.label.copyWith(color: AppColors.darkFg2)),
         const SizedBox(height: 8),
         if (_vehicles.isEmpty)
           _emptyChip('No available vehicles')
@@ -325,10 +324,10 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : AppColors.grey50,
-                    borderRadius: BorderRadius.circular(8),
+                    color: selected ? AppColors.accent : AppColors.darkBg3,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                     border: Border.all(
-                      color: selected ? AppColors.primary : AppColors.grey200,
+                      color: selected ? AppColors.accent : AppColors.darkLine,
                     ),
                   ),
                   child: Column(
@@ -339,7 +338,7 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: selected ? AppColors.white : AppColors.grey800,
+                          color: selected ? AppColors.accentFg : AppColors.darkFg0,
                         ),
                       ),
                       Text(
@@ -347,8 +346,8 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                         style: TextStyle(
                           fontSize: 11,
                           color: selected
-                              ? AppColors.white.withOpacity(0.8)
-                              : AppColors.grey500,
+                              ? AppColors.darkFg2
+                              : AppColors.darkFg2,
                         ),
                       ),
                     ],
@@ -366,10 +365,10 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                 ? _assign
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              disabledBackgroundColor: AppColors.grey200,
+              backgroundColor: AppColors.accent,
+              disabledBackgroundColor: AppColors.darkBg3,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadii.md),
               ),
             ),
             child: Text(
@@ -378,8 +377,8 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
                   : 'Select driver and vehicle',
               style: TextStyle(
                 color: _selectedDriverId != null
-                    ? AppColors.white
-                    : AppColors.grey400,
+                    ? AppColors.accentFg
+                    : AppColors.darkFg3,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -392,8 +391,8 @@ class _AssignDriverPanelState extends State<_AssignDriverPanel> {
   Widget _emptyChip(String text) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     decoration: BoxDecoration(
-      color: AppColors.grey100,
-      borderRadius: BorderRadius.circular(8),
+      color: AppColors.darkBg3,
+      borderRadius: BorderRadius.circular(AppRadii.sm),
     ),
     child: Text(text, style: AppTextStyles.caption),
   );
@@ -444,7 +443,7 @@ class _ActionButtons extends StatelessWidget {
                         },
                         child: const Text(
                           'Reject',
-                          style: TextStyle(color: AppColors.error),
+                          style: TextStyle(color: AppColors.bad),
                         ),
                       ),
                     ],
@@ -452,10 +451,10 @@ class _ActionButtons extends StatelessWidget {
                 );
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: AppColors.bad,
+                side: const BorderSide(color: AppColors.bad),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
                 ),
               ),
               child: const Text('Reject'),
@@ -471,14 +470,14 @@ class _ActionButtons extends StatelessWidget {
                 );
               },
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.good,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
                 ),
               ),
               child: const Text(
                 'Approve',
-                style: TextStyle(color: AppColors.white),
+                style: TextStyle(color: AppColors.accentFg),
               ),
             ),
           ),
@@ -501,9 +500,9 @@ class _ActionButtons extends StatelessWidget {
               icon: const Icon(Icons.auto_awesome_outlined),
               label: const Text('Auto-Assign Driver'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.accent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
                 ),
               ),
             ),
@@ -521,7 +520,7 @@ class _ActionButtons extends StatelessWidget {
               label: const Text('Manual Assign'),
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
                 ),
               ),
             ),
@@ -544,14 +543,14 @@ class _Section extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.grey200),
+        color: AppColors.darkBg3,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.label),
+          Text(title, style: AppTextStyles.label.copyWith(color: AppColors.darkFg2)),
           const SizedBox(height: 10),
           ...children,
         ],
@@ -574,9 +573,9 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: AppTextStyles.caption),
+            child: Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.darkFg2)),
           ),
-          Expanded(child: Text(value, style: AppTextStyles.body)),
+          Expanded(child: Text(value, style: AppTextStyles.body.copyWith(color: AppColors.darkFg0))),
         ],
       ),
     );

@@ -20,6 +20,22 @@ import 'package:cruzo/features/fleet_manager/clients/presentation/bloc/client_bl
 import 'package:cruzo/features/fleet_manager/bookings/data/booking_repository.dart';
 import 'package:cruzo/features/fleet_manager/bookings/domain/booking_repo.dart';
 import 'package:cruzo/features/fleet_manager/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:cruzo/features/fleet_manager/invoices/data/invoice_repository.dart';
+import 'package:cruzo/features/fleet_manager/invoices/domain/invoice_repo.dart';
+import 'package:cruzo/features/fleet_manager/invoices/presentation/bloc/invoice_bloc.dart';
+import 'package:cruzo/features/fleet_manager/sos_alerts/data/sos_alert_repository.dart';
+import 'package:cruzo/features/fleet_manager/sos_alerts/domain/sos_alert_repo.dart';
+import 'package:cruzo/features/fleet_manager/sos_alerts/presentation/bloc/sos_alert_bloc.dart';
+import 'package:cruzo/features/fleet_manager/documents/data/document_expiry_repository.dart';
+import 'package:cruzo/features/fleet_manager/documents/domain/document_expiry_repo.dart';
+import 'package:cruzo/features/fleet_manager/documents/presentation/bloc/document_expiry_bloc.dart';
+import 'package:cruzo/features/fleet_manager/reports/data/report_repository.dart';
+import 'package:cruzo/features/fleet_manager/reports/domain/report_repo.dart';
+import 'package:cruzo/features/fleet_manager/reports/presentation/bloc/report_bloc.dart';
+import 'package:cruzo/features/fleet_manager/daily_schedules/data/daily_schedule_repository.dart';
+import 'package:cruzo/features/fleet_manager/daily_schedules/domain/daily_schedule_repo.dart';
+import 'package:cruzo/features/fleet_manager/daily_schedules/presentation/bloc/daily_schedule_bloc.dart';
+import '../theme/theme_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -58,4 +74,27 @@ void setupDI() {
   // Fleet Manager — Bookings
   getIt.registerLazySingleton<BookingRepo>(() => BookingRepoImpl(getIt()));
   getIt.registerFactory<BookingBloc>(() => BookingBloc(getIt()));
+
+  // Fleet Manager — Invoices
+  getIt.registerLazySingleton<InvoiceRepo>(() => InvoiceRepoImpl(getIt()));
+  getIt.registerFactory<InvoiceBloc>(() => InvoiceBloc(getIt()));
+
+  // Fleet Manager — SOS Alerts
+  getIt.registerLazySingleton<SosAlertRepo>(() => SosAlertRepoImpl(getIt()));
+  getIt.registerFactory<SosAlertBloc>(() => SosAlertBloc(getIt()));
+
+  // Fleet Manager — Documents
+  getIt.registerLazySingleton<DocumentExpiryRepo>(() => DocumentExpiryRepoImpl(getIt()));
+  getIt.registerFactory<DocumentExpiryBloc>(() => DocumentExpiryBloc(getIt()));
+
+  // Fleet Manager — Daily Schedules
+  getIt.registerLazySingleton<DailyScheduleRepo>(() => DailyScheduleRepoImpl(getIt()));
+  getIt.registerFactory<DailyScheduleBloc>(() => DailyScheduleBloc(getIt()));
+
+  // Fleet Manager — Reports
+  getIt.registerLazySingleton<ReportRepo>(() => ReportRepoImpl(getIt()));
+  getIt.registerFactory<ReportBloc>(() => ReportBloc(getIt()));
+
+  // Theme service
+  getIt.registerLazySingleton(() => ThemeService());
 }

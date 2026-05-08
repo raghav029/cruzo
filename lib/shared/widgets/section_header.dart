@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import 'package:cruzo/core/theme/dls/dls.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -18,7 +17,7 @@ class SectionHeader extends StatelessWidget {
         if (actionLabel != null)
           TextButton(
             onPressed: onAction,
-            child: Text(actionLabel!, style: AppTextStyles.label.copyWith(color: AppColors.primary)),
+            child: Text(actionLabel!, style: AppTextStyles.label.copyWith(color: AppColors.accent)),
           ),
       ],
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/vehicle.dart';
 import '../bloc/vehicle_bloc.dart';
 import '../bloc/vehicle_event.dart';
@@ -27,16 +26,22 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.darkBg1,
       body: BlocConsumer<VehicleBloc, VehicleState>(
         listener: (context, state) {
           if (state is VehicleMutationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.good,
+              ),
             );
           } else if (state is VehicleMutationError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.bad,
+              ),
             );
           }
         },
@@ -59,8 +64,18 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Vehicles', style: AppTextStyles.h2),
-                          Text('${vehicles.length} total', style: AppTextStyles.bodySm),
+                          Text(
+                            'Vehicles',
+                            style: AppTextStyles.h2.copyWith(
+                              color: AppColors.darkFg0,
+                            ),
+                          ),
+                          Text(
+                            '${vehicles.length} total',
+                            style: AppTextStyles.bodySm.copyWith(
+                              color: AppColors.darkFg2,
+                            ),
+                          ),
                         ],
                       ),
                       const Spacer(),
@@ -69,8 +84,11 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('Add Vehicle'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          backgroundColor: AppColors.accent,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ],
@@ -84,7 +102,9 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     active: _activeFilter,
                     onChanged: (f) {
                       setState(() => _activeFilter = f);
-                      context.read<VehicleBloc>().add(VehicleLoadRequested(statusFilter: f));
+                      context.read<VehicleBloc>().add(
+                        VehicleLoadRequested(statusFilter: f),
+                      );
                     },
                   ),
                 ),
@@ -99,12 +119,24 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: AppColors.bad,
+                        ),
                         const SizedBox(height: 12),
-                        Text(state.message, style: AppTextStyles.body, textAlign: TextAlign.center),
+                        Text(
+                          state.message,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.darkFg1,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 16),
                         TextButton(
-                          onPressed: () => context.read<VehicleBloc>().add(const VehicleLoadRequested()),
+                          onPressed: () => context.read<VehicleBloc>().add(
+                            const VehicleLoadRequested(),
+                          ),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -117,17 +149,33 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.directions_car_outlined, size: 56, color: AppColors.grey300),
+                        Icon(
+                          Icons.directions_car_outlined,
+                          size: 56,
+                          color: AppColors.darkFg3,
+                        ),
                         const SizedBox(height: 12),
-                        Text('No vehicles yet', style: AppTextStyles.h4),
+                        Text(
+                          'No vehicles yet',
+                          style: AppTextStyles.h4.copyWith(
+                            color: AppColors.darkFg0,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text('Add your first vehicle to get started', style: AppTextStyles.bodySm),
+                        Text(
+                          'Add your first vehicle to get started',
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: AppColors.darkFg2,
+                          ),
+                        ),
                         const SizedBox(height: 20),
                         FilledButton.icon(
                           onPressed: () => VehicleFormSheet.show(context),
                           icon: const Icon(Icons.add),
                           label: const Text('Add Vehicle'),
-                          style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                          ),
                         ),
                       ],
                     ),
@@ -178,15 +226,17 @@ class _FilterBar extends StatelessWidget {
               label: Text(f.label),
               selected: selected,
               onSelected: (_) => onChanged(f.value),
-              selectedColor: AppColors.primaryLight,
-              checkmarkColor: AppColors.primary,
+              selectedColor: AppColors.accentBg,
+              checkmarkColor: AppColors.accent,
               labelStyle: TextStyle(
-                color: selected ? AppColors.primary : AppColors.grey600,
+                color: selected ? AppColors.accent : AppColors.darkFg2,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 13,
               ),
-              side: BorderSide(color: selected ? AppColors.primary : AppColors.grey200),
-              backgroundColor: AppColors.white,
+              side: BorderSide(
+                color: selected ? AppColors.accent : AppColors.darkLine,
+              ),
+              backgroundColor: AppColors.darkBg3,
             ),
           );
         }).toList(),
@@ -206,19 +256,24 @@ class _VehicleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.grey200),
+        color: AppColors.darkBg2,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
       ),
       child: Row(
         children: [
           Container(
-            width: 48, height: 48,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: _typeColor(vehicle.vehicleType).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(_typeIcon(vehicle.vehicleType), color: _typeColor(vehicle.vehicleType), size: 24),
+            child: Icon(
+              _typeIcon(vehicle.vehicleType),
+              color: _typeColor(vehicle.vehicleType),
+              size: 24,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -227,7 +282,12 @@ class _VehicleCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('${vehicle.make} ${vehicle.model}', style: AppTextStyles.h4),
+                    Text(
+                      '${vehicle.make} ${vehicle.model}',
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.darkFg0,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     _StatusBadge(status: vehicle.status),
                   ],
@@ -235,11 +295,16 @@ class _VehicleCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${vehicle.plateNumber}  •  ${vehicle.vehicleType}  •  ${vehicle.year}',
-                  style: AppTextStyles.bodySm,
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: AppColors.darkFg2,
+                  ),
                 ),
                 if (vehicle.insuranceExpiry != null) ...[
                   const SizedBox(height: 4),
-                  _ExpiryRow(label: 'Insurance', date: vehicle.insuranceExpiry!),
+                  _ExpiryRow(
+                    label: 'Insurance',
+                    date: vehicle.insuranceExpiry!,
+                  ),
                 ],
               ],
             ),
@@ -257,10 +322,10 @@ class _VehicleCard extends StatelessWidget {
               PopupMenuItem(value: 'edit', child: Text('Edit')),
               PopupMenuItem(
                 value: 'delete',
-                child: Text('Delete', style: TextStyle(color: AppColors.error)),
+                child: Text('Delete', style: TextStyle(color: AppColors.bad)),
               ),
             ],
-            child: const Icon(Icons.more_vert, color: AppColors.grey400),
+            child: const Icon(Icons.more_vert, color: AppColors.darkFg3),
           ),
         ],
       ),
@@ -272,15 +337,22 @@ class _VehicleCard extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete Vehicle'),
-        content: Text('Remove ${vehicle.make} ${vehicle.model} (${vehicle.plateNumber})?'),
+        content: Text(
+          'Remove ${vehicle.make} ${vehicle.model} (${vehicle.plateNumber})?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<VehicleBloc>().add(VehicleDeleteRequested(vehicle.id));
+              context.read<VehicleBloc>().add(
+                VehicleDeleteRequested(vehicle.id),
+              );
             },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: const Text('Delete', style: TextStyle(color: AppColors.bad)),
           ),
         ],
       ),
@@ -288,18 +360,18 @@ class _VehicleCard extends StatelessWidget {
   }
 
   Color _typeColor(String type) => switch (type) {
-        'SEDAN' => AppColors.primary,
-        'SUV' => AppColors.success,
-        'LUXURY' => const Color(0xFF7C3AED),
-        _ => AppColors.grey500,
-      };
+    'SEDAN' => AppColors.accent,
+    'SUV' => AppColors.good,
+    'LUXURY' => const Color(0xFF7C3AED),
+    _ => AppColors.darkFg3,
+  };
 
   IconData _typeIcon(String type) => switch (type) {
-        'SEDAN' => Icons.directions_car,
-        'SUV' => Icons.airport_shuttle,
-        'LUXURY' => Icons.star,
-        _ => Icons.directions_car_outlined,
-      };
+    'SEDAN' => Icons.directions_car,
+    'SUV' => Icons.airport_shuttle,
+    'LUXURY' => Icons.star,
+    _ => Icons.directions_car_outlined,
+  };
 }
 
 class _StatusBadge extends StatelessWidget {
@@ -309,15 +381,25 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, bg, label) = switch (status) {
-      'ACTIVE' => (AppColors.success, AppColors.successLight, 'Active'),
-      'IN_TRIP' => (AppColors.primary, AppColors.primaryLight, 'In Trip'),
-      'INACTIVE' => (AppColors.grey500, AppColors.grey100, 'Inactive'),
-      _ => (AppColors.grey500, AppColors.grey100, status),
+      'ACTIVE' => (AppColors.good, AppColors.goodBg, 'Active'),
+      'IN_TRIP' => (AppColors.accent, AppColors.accentBg, 'In Trip'),
+      'INACTIVE' => (AppColors.darkFg3, AppColors.darkBg3, 'Inactive'),
+      _ => (AppColors.darkFg3, AppColors.darkBg3, status),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -330,9 +412,14 @@ class _ExpiryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final expiry = DateTime.tryParse(date);
-    final isExpiringSoon = expiry != null && expiry.difference(DateTime.now()).inDays < 30;
+    final isExpiringSoon =
+        expiry != null && expiry.difference(DateTime.now()).inDays < 30;
     final isExpired = expiry != null && expiry.isBefore(DateTime.now());
-    final color = isExpired ? AppColors.error : isExpiringSoon ? AppColors.warning : AppColors.grey400;
+    final color = isExpired
+        ? AppColors.bad
+        : isExpiringSoon
+        ? AppColors.warn
+        : AppColors.darkFg3;
 
     return Row(
       children: [
@@ -340,22 +427,46 @@ class _ExpiryRow extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           '$label: $date',
-          style: TextStyle(fontSize: 11, color: color, fontWeight: isExpiringSoon ? FontWeight.w600 : FontWeight.w400),
+          style: TextStyle(
+            fontSize: 11,
+            color: color,
+            fontWeight: isExpiringSoon ? FontWeight.w600 : FontWeight.w400,
+          ),
         ),
         if (isExpiringSoon && !isExpired) ...[
           const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(4)),
-            child: const Text('Expiring soon', style: TextStyle(fontSize: 10, color: AppColors.warning, fontWeight: FontWeight.w600)),
+            decoration: BoxDecoration(
+              color: AppColors.warnBg,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Expiring soon',
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.warn,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
         if (isExpired) ...[
           const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(color: AppColors.errorLight, borderRadius: BorderRadius.circular(4)),
-            child: const Text('Expired', style: TextStyle(fontSize: 10, color: AppColors.error, fontWeight: FontWeight.w600)),
+            decoration: BoxDecoration(
+              color: AppColors.badBg,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Expired',
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.bad,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ],

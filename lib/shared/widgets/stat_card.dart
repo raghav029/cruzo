@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import 'package:cruzo/core/theme/dls/dls.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -29,9 +28,9 @@ class StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.darkBg2,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.grey200),
+          border: Border.all(color: AppColors.darkLine),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +50,7 @@ class StatCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(value, style: AppTextStyles.h2.copyWith(color: AppColors.grey900)),
+            Text(value, style: AppTextStyles.h2.copyWith(color: AppColors.darkFg0)),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
               Text(subtitle!, style: AppTextStyles.caption, overflow: TextOverflow.ellipsis, maxLines: 1),

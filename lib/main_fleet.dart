@@ -5,6 +5,8 @@ import 'core/auth/bloc/auth_bloc.dart';
 import 'core/auth/bloc/auth_event.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'package:go_router/go_router.dart';
+import 'core/theme/theme_service.dart';
 import 'package:cruzo/features/fleet_manager/dashboard/presentation/bloc/dashboard_bloc.dart';
 
 void main() async {
@@ -22,13 +24,15 @@ class CruzoFleetApp extends StatefulWidget {
 
 class _CruzoFleetAppState extends State<CruzoFleetApp> {
   late final AuthBloc _authBloc;
-  late final _router;
+  late final GoRouter _router;
+  late final ThemeService _themeService;
 
   @override
   void initState() {
     super.initState();
     _authBloc = getIt<AuthBloc>()..add(const AuthCheckRequested());
     _router = createRouter(_authBloc);
+    _themeService = getIt<ThemeService>();
   }
 
   @override
@@ -44,11 +48,18 @@ class _CruzoFleetAppState extends State<CruzoFleetApp> {
         BlocProvider.value(value: _authBloc),
         BlocProvider(create: (_) => getIt<DashboardBloc>()),
       ],
-      child: MaterialApp.router(
-        title: 'Cruzo Fleet',
-        theme: AppTheme.light,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
+      child: AnimatedBuilder(
+        animation: _themeService,
+        builder: (context, _) {
+          return MaterialApp.router(
+            title: 'Cruzo Fleet',
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: _themeService.mode,
+            routerConfig: _router,
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

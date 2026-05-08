@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/corporate_client.dart';
 import '../bloc/client_bloc.dart';
 import '../bloc/client_event.dart';
@@ -28,16 +27,16 @@ class _ClientsScreenState extends State<ClientsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.darkBg1,
       body: BlocConsumer<ClientBloc, ClientState>(
         listener: (context, state) {
           if (state is ClientMutationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.good),
             );
           } else if (state is ClientMutationError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.bad),
             );
           }
         },
@@ -88,13 +87,13 @@ class _ClientsScreenState extends State<ClientsScreen> {
                       _SummaryChip(
                         label: 'Active',
                         count: all.where((c) => c.active).length,
-                        color: AppColors.success,
+                        color: AppColors.good,
                       ),
                       const SizedBox(width: 8),
                       _SummaryChip(
                         label: 'Inactive',
                         count: all.where((c) => !c.active).length,
-                        color: AppColors.grey400,
+                        color: AppColors.darkFg3,
                       ),
                       const Spacer(),
                       Row(
@@ -120,7 +119,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                        const Icon(Icons.error_outline, size: 48, color: AppColors.bad),
                         const SizedBox(height: 12),
                         Text(state.message, style: AppTextStyles.body, textAlign: TextAlign.center),
                         const SizedBox(height: 16),
@@ -138,7 +137,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.business_outlined, size: 56, color: AppColors.grey300),
+                        Icon(Icons.business_outlined, size: 56, color: AppColors.darkBg3),
                         const SizedBox(height: 12),
                         Text('No clients yet', style: AppTextStyles.h4),
                         const SizedBox(height: 4),
@@ -204,17 +203,17 @@ class _ClientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final utilizationColor = client.utilizationPct > 0.9
-        ? AppColors.error
+        ? AppColors.bad
         : client.utilizationPct > 0.7
-            ? AppColors.warning
-            : AppColors.success;
+            ? AppColors.warn
+            : AppColors.good;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.darkBg2,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: client.active ? AppColors.grey200 : AppColors.grey200,
+          color: client.active ? AppColors.darkLine : AppColors.darkLine,
           width: 1,
         ),
       ),
@@ -227,7 +226,7 @@ class _ClientCard extends StatelessWidget {
                 Container(
                   width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: client.active ? AppColors.primaryLight : AppColors.grey100,
+                    color: client.active ? AppColors.accentBg : AppColors.darkBg3,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   alignment: Alignment.center,
@@ -235,7 +234,7 @@ class _ClientCard extends StatelessWidget {
                     client.companyName.isNotEmpty ? client.companyName[0].toUpperCase() : '?',
                     style: TextStyle(
                       fontSize: 20, fontWeight: FontWeight.w700,
-                      color: client.active ? AppColors.primary : AppColors.grey400,
+                      color: client.active ? AppColors.primary : AppColors.darkFg3,
                     ),
                   ),
                 ),
@@ -255,9 +254,9 @@ class _ClientCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                  color: AppColors.grey100, borderRadius: BorderRadius.circular(20)),
+                                  color: AppColors.darkBg3, borderRadius: BorderRadius.circular(20)),
                               child: const Text('Inactive',
-                                  style: TextStyle(fontSize: 10, color: AppColors.grey500, fontWeight: FontWeight.w600)),
+                                  style: TextStyle(fontSize: 10, color: AppColors.darkFg3, fontWeight: FontWeight.w600)),
                             ),
                           ],
                         ],
@@ -293,16 +292,16 @@ class _ClientCard extends StatelessWidget {
                     ),
                     PopupMenuItem(
                       value: 'delete',
-                      child: Text('Delete', style: TextStyle(color: AppColors.error)),
+                      child: Text('Delete', style: TextStyle(color: AppColors.bad)),
                     ),
                   ],
-                  child: const Icon(Icons.more_vert, color: AppColors.grey400),
+                  child: const Icon(Icons.more_vert, color: AppColors.darkFg3),
                 ),
               ],
             ),
           ),
           if (client.creditLimit > 0) ...[
-            Divider(height: 1, color: AppColors.grey100),
+            Divider(height: 1, color: AppColors.darkBg3),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               child: Column(
@@ -313,12 +312,12 @@ class _ClientCard extends StatelessWidget {
                       _CreditStat(
                         label: 'Credit Limit',
                         value: '₹${_fmt(client.creditLimit)}',
-                        color: AppColors.grey700,
+                        color: AppColors.darkFg1,
                       ),
                       _CreditStat(
                         label: 'Outstanding',
                         value: '₹${_fmt(client.currentOutstanding)}',
-                        color: client.currentOutstanding > 0 ? AppColors.warning : AppColors.grey500,
+                        color: client.currentOutstanding > 0 ? AppColors.warn : AppColors.darkFg3,
                       ),
                       _CreditStat(
                         label: 'Available',
@@ -343,7 +342,7 @@ class _ClientCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: client.utilizationPct,
-                      backgroundColor: AppColors.grey100,
+                      backgroundColor: AppColors.darkBg3,
                       valueColor: AlwaysStoppedAnimation(utilizationColor),
                       minHeight: 5,
                     ),
@@ -356,7 +355,7 @@ class _ClientCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Row(
               children: [
-                Icon(Icons.refresh_outlined, size: 13, color: AppColors.grey400),
+                Icon(Icons.refresh_outlined, size: 13, color: AppColors.darkFg3),
                 const SizedBox(width: 4),
                 Text(
                   '${client.billingCycle == 'MONTHLY' ? 'Monthly' : 'Weekly'} billing',
@@ -383,7 +382,7 @@ class _ClientCard extends StatelessWidget {
               Navigator.pop(context);
               context.read<ClientBloc>().add(ClientDeleteRequested(client.id));
             },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: const Text('Delete', style: TextStyle(color: AppColors.bad)),
           ),
         ],
       ),

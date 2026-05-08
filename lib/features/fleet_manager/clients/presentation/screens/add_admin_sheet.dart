@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../bloc/client_bloc.dart';
 import '../bloc/client_event.dart';
 
@@ -58,7 +57,7 @@ class _AddAdminSheetState extends State<AddAdminSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.darkBg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -106,7 +105,7 @@ class _AddAdminSheetState extends State<AddAdminSheet> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       child: const Text('Create Admin Account',
-                          style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                          style: TextStyle(color: AppColors.darkBg2, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -134,11 +133,8 @@ class _AddAdminSheetState extends State<AddAdminSheet> {
           controller: controller,
           keyboardType: keyboardType,
           decoration: InputDecoration(
-            hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
+            hintStyle: const TextStyle(color: AppColors.darkFg3, fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary)),
           ),
           validator: validator ?? (required ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null : null),
         ),

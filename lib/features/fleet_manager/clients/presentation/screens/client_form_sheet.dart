@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/corporate_client.dart';
 import '../bloc/client_bloc.dart';
 import '../bloc/client_event.dart';
@@ -88,7 +87,7 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
       minChildSize: 0.5,
       builder: (_, controller) => Container(
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.darkBg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -96,7 +95,7 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
             const SizedBox(height: 12),
             Container(
               width: 40, height: 4,
-              decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: AppColors.darkBg3, borderRadius: BorderRadius.circular(2)),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -174,7 +173,7 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           child: Text(isEdit ? 'Save Changes' : 'Add Client',
-                              style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                              style: const TextStyle(color: AppColors.darkBg2, fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -199,16 +198,16 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
               margin: EdgeInsets.only(right: c == 'MONTHLY' ? 10 : 0),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.grey100,
+                color: selected ? AppColors.primary : AppColors.darkBg3,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: selected ? AppColors.primary : AppColors.grey200),
+                border: Border.all(color: selected ? AppColors.primary : AppColors.darkLine),
               ),
               alignment: Alignment.center,
               child: Text(
                 c == 'MONTHLY' ? 'Monthly' : 'Weekly',
                 style: TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.white : AppColors.grey600,
+                  color: selected ? AppColors.darkBg2 : AppColors.darkFg2,
                 ),
               ),
             ),
@@ -240,11 +239,8 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
+            hintStyle: const TextStyle(color: AppColors.darkFg3, fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary)),
           ),
           validator: validator ?? (required ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null : null),
         ),

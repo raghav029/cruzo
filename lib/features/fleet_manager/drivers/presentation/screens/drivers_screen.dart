@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/driver.dart';
 import '../bloc/driver_bloc.dart';
 import '../bloc/driver_event.dart';
@@ -27,16 +26,16 @@ class _DriversScreenState extends State<DriversScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.darkBg1,
       body: BlocConsumer<DriverBloc, DriverState>(
         listener: (context, state) {
           if (state is DriverMutationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.good),
             );
           } else if (state is DriverMutationError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.bad),
             );
           }
         },
@@ -63,8 +62,8 @@ class _DriversScreenState extends State<DriversScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Drivers', style: AppTextStyles.h2),
-                          Text('${allDrivers.length} total', style: AppTextStyles.bodySm),
+                          Text('Drivers', style: AppTextStyles.h2.copyWith(color: AppColors.darkFg0)),
+                          Text('${allDrivers.length} total', style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2)),
                         ],
                       ),
                       const Spacer(),
@@ -73,7 +72,7 @@ class _DriversScreenState extends State<DriversScreen> {
                         icon: const Icon(Icons.person_add_outlined, size: 18),
                         label: const Text('Add Driver'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: AppColors.accent,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         ),
                       ),
@@ -99,9 +98,9 @@ class _DriversScreenState extends State<DriversScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                        const Icon(Icons.error_outline, size: 48, color: AppColors.bad),
                         const SizedBox(height: 12),
-                        Text(state.message, style: AppTextStyles.body, textAlign: TextAlign.center),
+                        Text(state.message, style: AppTextStyles.body.copyWith(color: AppColors.darkFg1), textAlign: TextAlign.center),
                         const SizedBox(height: 16),
                         TextButton(
                           onPressed: () => context.read<DriverBloc>().add(const DriverLoadRequested()),
@@ -117,18 +116,18 @@ class _DriversScreenState extends State<DriversScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.person_outline, size: 56, color: AppColors.grey300),
+                        Icon(Icons.person_outline, size: 56, color: AppColors.darkFg3),
                         const SizedBox(height: 12),
-                        Text(_filter != null ? 'No drivers with this status' : 'No drivers yet', style: AppTextStyles.h4),
+                        Text(_filter != null ? 'No drivers with this status' : 'No drivers yet', style: AppTextStyles.h4.copyWith(color: AppColors.darkFg1)),
                         if (_filter == null) ...[
                           const SizedBox(height: 4),
-                          Text('Add your first driver to get started', style: AppTextStyles.bodySm),
+                          Text('Add your first driver to get started', style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2)),
                           const SizedBox(height: 20),
                           FilledButton.icon(
                             onPressed: () => DriverFormSheet.show(context),
                             icon: const Icon(Icons.person_add_outlined),
                             label: const Text('Add Driver'),
-                            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
                           ),
                         ],
                       ],
@@ -185,15 +184,15 @@ class _AvailabilityBar extends StatelessWidget {
               label: Text('${f.label} ($n)'),
               selected: selected,
               onSelected: (_) => onChanged(f.value),
-              selectedColor: AppColors.primaryLight,
-              checkmarkColor: AppColors.primary,
+              selectedColor: AppColors.accentBg,
+              checkmarkColor: AppColors.accent,
               labelStyle: TextStyle(
-                color: selected ? AppColors.primary : AppColors.grey600,
+                color: selected ? AppColors.accent : AppColors.darkFg2,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 13,
               ),
-              side: BorderSide(color: selected ? AppColors.primary : AppColors.grey200),
-              backgroundColor: AppColors.white,
+              side: BorderSide(color: selected ? AppColors.accent : AppColors.darkLine),
+              backgroundColor: AppColors.darkBg3,
             ),
           );
         }).toList(),
@@ -213,9 +212,9 @@ class _DriverCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.grey200),
+        color: AppColors.darkBg2,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
       ),
       child: Row(
         children: [
@@ -228,16 +227,16 @@ class _DriverCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(driver.fullName, style: AppTextStyles.h4, overflow: TextOverflow.ellipsis),
+                      child: Text(driver.fullName, style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0), overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(width: 8),
                     _AvailabilityBadge(availability: driver.availability),
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(driver.phone, style: AppTextStyles.bodySm),
+                Text(driver.phone, style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2)),
                 const SizedBox(height: 2),
-                Text('License: ${driver.licenseNumber}', style: AppTextStyles.bodySm),
+                Text('License: ${driver.licenseNumber}', style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2)),
                 if (driver.licenseExpiry != null) ...[
                   const SizedBox(height: 4),
                   _ExpiryRow(label: 'License', date: driver.licenseExpiry!),
@@ -255,10 +254,10 @@ class _DriverCard extends StatelessWidget {
               PopupMenuItem(value: 'edit', child: Text('Edit')),
               PopupMenuItem(
                 value: 'delete',
-                child: Text('Remove', style: TextStyle(color: AppColors.error)),
+                child: Text('Remove', style: TextStyle(color: AppColors.bad)),
               ),
             ],
-            child: const Icon(Icons.more_vert, color: AppColors.grey400),
+            child: const Icon(Icons.more_vert, color: AppColors.darkFg3),
           ),
         ],
       ),
@@ -278,7 +277,7 @@ class _DriverCard extends StatelessWidget {
               Navigator.pop(context);
               context.read<DriverBloc>().add(DriverDeleteRequested(driver.id));
             },
-            child: const Text('Remove', style: TextStyle(color: AppColors.error)),
+            child: const Text('Remove', style: TextStyle(color: AppColors.bad)),
           ),
         ],
       ),
@@ -295,9 +294,9 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (availability) {
-      'AVAILABLE' => AppColors.success,
-      'ON_TRIP' => AppColors.primary,
-      _ => AppColors.grey400,
+      'AVAILABLE' => AppColors.good,
+      'ON_TRIP' => AppColors.accent,
+      _ => AppColors.darkFg3,
     };
     return Stack(
       children: [
@@ -313,7 +312,7 @@ class _Avatar extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.white, width: 2),
+              border: Border.all(color: AppColors.darkBg2, width: 2),
             ),
           ),
         ),
@@ -329,10 +328,10 @@ class _AvailabilityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, bg, label) = switch (availability) {
-      'AVAILABLE' => (AppColors.success, AppColors.successLight, 'Available'),
-      'ON_TRIP' => (AppColors.primary, AppColors.primaryLight, 'On Trip'),
-      'OFF_DUTY' => (AppColors.grey500, AppColors.grey100, 'Off Duty'),
-      _ => (AppColors.grey500, AppColors.grey100, availability),
+      'AVAILABLE' => (AppColors.good, AppColors.goodBg, 'Available'),
+      'ON_TRIP' => (AppColors.accent, AppColors.accentBg, 'On Trip'),
+      'OFF_DUTY' => (AppColors.darkFg3, AppColors.darkBg3, 'Off Duty'),
+      _ => (AppColors.darkFg3, AppColors.darkBg3, availability),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -353,7 +352,7 @@ class _ExpiryRow extends StatelessWidget {
     final daysLeft = expiry?.difference(DateTime.now()).inDays;
     final isExpired = daysLeft != null && daysLeft < 0;
     final isExpiringSoon = daysLeft != null && daysLeft >= 0 && daysLeft < 30;
-    final color = isExpired ? AppColors.error : isExpiringSoon ? AppColors.warning : AppColors.grey400;
+    final color = isExpired ? AppColors.bad : isExpiringSoon ? AppColors.warn : AppColors.darkFg3;
 
     return Row(
       children: [
@@ -366,16 +365,16 @@ class _ExpiryRow extends StatelessWidget {
           const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(color: AppColors.errorLight, borderRadius: BorderRadius.circular(4)),
-            child: const Text('Expired', style: TextStyle(fontSize: 10, color: AppColors.error, fontWeight: FontWeight.w600)),
+            decoration: BoxDecoration(color: AppColors.badBg, borderRadius: BorderRadius.circular(4)),
+            child: const Text('Expired', style: TextStyle(fontSize: 10, color: AppColors.bad, fontWeight: FontWeight.w600)),
           ),
         ] else if (isExpiringSoon) ...[
           const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(color: AppColors.warnBg, borderRadius: BorderRadius.circular(4)),
             child: Text('$daysLeft days left',
-                style: const TextStyle(fontSize: 10, color: AppColors.warning, fontWeight: FontWeight.w600)),
+                style: const TextStyle(fontSize: 10, color: AppColors.warn, fontWeight: FontWeight.w600)),
           ),
         ],
       ],

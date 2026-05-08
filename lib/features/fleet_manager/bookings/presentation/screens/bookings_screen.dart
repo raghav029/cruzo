@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/booking.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
@@ -36,16 +35,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.darkBg1,
       body: BlocConsumer<BookingBloc, BookingState>(
         listener: (context, state) {
           if (state is BookingMutationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.good),
             );
           } else if (state is BookingMutationError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.bad),
             );
           }
         },
@@ -73,31 +72,31 @@ class _BookingsScreenState extends State<BookingsScreen> {
                         children: [
                           Row(
                             children: [
-                              Text('Bookings', style: AppTextStyles.h2),
+                              Text('Bookings', style: AppTextStyles.h2.copyWith(color: AppColors.darkFg0)),
                               if (pendingCount > 0) ...[
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.warningLight,
+                                    color: AppColors.warnBg,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text('$pendingCount pending',
                                       style: const TextStyle(
                                           fontSize: 11, fontWeight: FontWeight.w700,
-                                          color: AppColors.warning)),
+                                          color: AppColors.warn)),
                                 ),
                               ],
                             ],
                           ),
-                          Text('${bookings.length} total', style: AppTextStyles.bodySm),
+                          Text('${bookings.length} total', style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2)),
                         ],
                       ),
                       const Spacer(),
                       IconButton(
                         onPressed: () => context.read<BookingBloc>()
                             .add(BookingLoadRequested(statusFilter: _filter)),
-                        icon: const Icon(Icons.refresh_outlined, color: AppColors.grey600),
+                        icon: const Icon(Icons.refresh_outlined, color: AppColors.darkFg2),
                         tooltip: 'Refresh',
                       ),
                     ],
@@ -122,16 +121,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               context.read<BookingBloc>()
                                   .add(BookingLoadRequested(statusFilter: f.value));
                             },
-                            selectedColor: AppColors.primaryLight,
-                            checkmarkColor: AppColors.primary,
+                            selectedColor: AppColors.accentBg,
+                            checkmarkColor: AppColors.accent,
                             labelStyle: TextStyle(
-                              color: selected ? AppColors.primary : AppColors.grey600,
+                              color: selected ? AppColors.accent : AppColors.darkFg2,
                               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                               fontSize: 13,
                             ),
                             side: BorderSide(
-                                color: selected ? AppColors.primary : AppColors.grey200),
-                            backgroundColor: AppColors.white,
+                                color: selected ? AppColors.accent : AppColors.darkLine),
+                            backgroundColor: AppColors.darkBg3,
                           ),
                         );
                       }).toList(),
@@ -147,7 +146,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                        const Icon(Icons.error_outline, size: 48, color: AppColors.bad),
                         const SizedBox(height: 12),
                         Text(state.message,
                             style: AppTextStyles.body, textAlign: TextAlign.center),
@@ -167,12 +166,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.calendar_today_outlined, size: 56, color: AppColors.grey300),
+                        Icon(Icons.calendar_today_outlined, size: 56, color: AppColors.darkFg3),
                         const SizedBox(height: 12),
-                        Text('No bookings', style: AppTextStyles.h4),
+                        Text('No bookings', style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0)),
                         const SizedBox(height: 4),
                         Text('Bookings will appear here once employees create them.',
-                            style: AppTextStyles.bodySm, textAlign: TextAlign.center),
+                            style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2), textAlign: TextAlign.center),
                       ],
                     ),
                   ),
@@ -210,10 +209,10 @@ class _BookingCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.darkBg2,
+          borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(
-            color: booking.isPending ? AppColors.warning.withOpacity(0.4) : AppColors.grey200,
+            color: booking.isPending ? AppColors.warn.withOpacity(0.4) : AppColors.darkLine,
             width: booking.isPending ? 1.5 : 1,
           ),
         ),
@@ -228,13 +227,13 @@ class _BookingCard extends StatelessWidget {
                     children: [
                       Text(
                         booking.corporateClientName ?? 'Unknown Client',
-                        style: AppTextStyles.h4,
+                        style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         booking.employeeName ?? 'Unknown Employee',
-                        style: AppTextStyles.bodySm,
+                        style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
                       ),
                     ],
                   ),
@@ -255,12 +254,12 @@ class _BookingCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule_outlined, size: 13, color: AppColors.grey400),
+                const Icon(Icons.schedule_outlined, size: 13, color: AppColors.darkFg3),
                 const SizedBox(width: 4),
                 Text(_formatDate(booking.scheduledAt), style: AppTextStyles.caption),
                 if (booking.vehicleTypeRequested != null) ...[
                   const SizedBox(width: 12),
-                  const Icon(Icons.directions_car_outlined, size: 13, color: AppColors.grey400),
+                  const Icon(Icons.directions_car_outlined, size: 13, color: AppColors.darkFg3),
                   const SizedBox(width: 4),
                   Text(booking.vehicleTypeRequested!, style: AppTextStyles.caption),
                 ],
@@ -268,7 +267,7 @@ class _BookingCard extends StatelessWidget {
                   const Spacer(),
                   Text('₹${booking.estimatedFare!.toStringAsFixed(0)}',
                       style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.grey700)),
+                          fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.darkFg1)),
                 ],
               ],
             ),
@@ -276,7 +275,7 @@ class _BookingCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.person_outline, size: 13, color: AppColors.grey400),
+                  const Icon(Icons.person_outline, size: 13, color: AppColors.darkFg3),
                   const SizedBox(width: 4),
                   Text('${booking.driverName} • ${booking.vehiclePlate ?? ''}',
                       style: AppTextStyles.caption),
@@ -321,10 +320,10 @@ class _QuickActions extends StatelessWidget {
             child: OutlinedButton(
               onPressed: isMutating ? null : () => _confirmReject(context),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: AppColors.bad,
+                side: const BorderSide(color: AppColors.bad),
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
               ),
               child: const Text('Reject', style: TextStyle(fontSize: 13)),
             ),
@@ -336,11 +335,11 @@ class _QuickActions extends StatelessWidget {
                   ? null
                   : () => context.read<BookingBloc>().add(BookingApproveRequested(booking.id)),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.good,
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
               ),
-              child: const Text('Approve', style: TextStyle(fontSize: 13, color: AppColors.white)),
+              child: const Text('Approve', style: TextStyle(fontSize: 13, color: AppColors.accentFg)),
             ),
           ),
         ],
@@ -359,7 +358,7 @@ class _QuickActions extends StatelessWidget {
               label: const Text('Auto-assign', style: TextStyle(fontSize: 13)),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
               ),
             ),
           ),
@@ -372,9 +371,9 @@ class _QuickActions extends StatelessWidget {
               icon: const Icon(Icons.person_pin_outlined, size: 15),
               label: const Text('Assign', style: TextStyle(fontSize: 13)),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.accent,
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
               ),
             ),
           ),
@@ -415,7 +414,7 @@ class _QuickActions extends StatelessWidget {
                   BookingRejectRequested(booking.id,
                       reason: reasonCtrl.text.trim().isEmpty ? null : reasonCtrl.text.trim()));
             },
-            child: const Text('Reject', style: TextStyle(color: AppColors.error)),
+            child: const Text('Reject', style: TextStyle(color: AppColors.bad)),
           ),
         ],
       ),
@@ -438,13 +437,13 @@ class _RouteRow extends StatelessWidget {
           children: [
             Container(
               width: 8, height: 8,
-              decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+              decoration: const BoxDecoration(color: AppColors.good, shape: BoxShape.circle),
             ),
-            Container(width: 1, height: 20, color: AppColors.grey200),
+            Container(width: 1, height: 20, color: AppColors.darkLine),
             Container(
               width: 8, height: 8,
               decoration: BoxDecoration(
-                color: AppColors.error,
+                color: AppColors.bad,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -477,16 +476,16 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, bg, label) = switch (status) {
-      'PENDING_APPROVAL' => (AppColors.warning, AppColors.warningLight, 'Pending'),
-      'APPROVED' => (AppColors.info, AppColors.infoLight, 'Approved'),
-      'DRIVER_ASSIGNED' => (AppColors.primary, AppColors.primaryLight, 'Assigned'),
-      'DRIVER_EN_ROUTE' => (AppColors.primary, AppColors.primaryLight, 'En Route'),
-      'ARRIVED' => (AppColors.primary, AppColors.primaryLight, 'Arrived'),
-      'IN_PROGRESS' => (AppColors.success, AppColors.successLight, 'In Progress'),
-      'COMPLETED' => (AppColors.success, AppColors.successLight, 'Completed'),
-      'REJECTED' => (AppColors.error, AppColors.errorLight, 'Rejected'),
-      _ when status.startsWith('CANCELLED') => (AppColors.grey500, AppColors.grey100, 'Cancelled'),
-      _ => (AppColors.grey500, AppColors.grey100, status),
+      'PENDING_APPROVAL' => (AppColors.warn, AppColors.warnBg, 'Pending'),
+      'APPROVED' => (AppColors.info, AppColors.infoBg, 'Approved'),
+      'DRIVER_ASSIGNED' => (AppColors.accent, AppColors.accentBg, 'Assigned'),
+      'DRIVER_EN_ROUTE' => (AppColors.accent, AppColors.accentBg, 'En Route'),
+      'ARRIVED' => (AppColors.accent, AppColors.accentBg, 'Arrived'),
+      'IN_PROGRESS' => (AppColors.good, AppColors.goodBg, 'In Progress'),
+      'COMPLETED' => (AppColors.good, AppColors.goodBg, 'Completed'),
+      'REJECTED' => (AppColors.bad, AppColors.badBg, 'Rejected'),
+      _ when status.startsWith('CANCELLED') => (AppColors.darkFg3, AppColors.darkBg3, 'Cancelled'),
+      _ => (AppColors.darkFg3, AppColors.darkBg3, status),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

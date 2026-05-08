@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import 'package:cruzo/core/theme/dls/dls.dart';
 
 class AlertBadge extends StatelessWidget {
   final String label;
@@ -43,7 +42,7 @@ class AlertBadge extends StatelessWidget {
               decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
               child: Text(
                 '$count',
-                style: AppTextStyles.caption.copyWith(color: AppColors.white, fontWeight: FontWeight.w600),
+                style: AppTextStyles.caption.copyWith(color: AppColors.darkBg2, fontWeight: FontWeight.w600),
               ),
             ),
           ],

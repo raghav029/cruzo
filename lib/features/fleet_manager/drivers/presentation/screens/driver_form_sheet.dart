@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/theme/dls/dls.dart';
 import '../../domain/driver.dart';
 import '../bloc/driver_bloc.dart';
 import '../bloc/driver_event.dart';
@@ -111,7 +110,7 @@ class _DriverFormSheetState extends State<DriverFormSheet> {
       minChildSize: 0.5,
       builder: (_, controller) => Container(
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.darkBg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -119,7 +118,7 @@ class _DriverFormSheetState extends State<DriverFormSheet> {
             const SizedBox(height: 12),
             Container(
               width: 40, height: 4,
-              decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: AppColors.darkBg3, borderRadius: BorderRadius.circular(2)),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -180,11 +179,11 @@ class _DriverFormSheetState extends State<DriverFormSheet> {
                         child: ElevatedButton(
                           onPressed: _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            backgroundColor: AppColors.accent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
                           ),
                           child: Text(_isEdit ? 'Save Changes' : 'Add Driver',
-                              style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                              style: const TextStyle(color: AppColors.accentFg, fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -210,16 +209,16 @@ class _DriverFormSheetState extends State<DriverFormSheet> {
               margin: EdgeInsets.only(right: o != options.last ? 10 : 0),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.grey100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: selected ? AppColors.primary : AppColors.grey200),
+                color: selected ? AppColors.accent : AppColors.darkBg3,
+                borderRadius: BorderRadius.circular(AppRadii.sm),
+                border: Border.all(color: selected ? AppColors.accent : AppColors.darkLine),
               ),
               alignment: Alignment.center,
               child: Text(
                 o == 'AVAILABLE' ? 'Available' : 'Off Duty',
                 style: TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.white : AppColors.grey600,
+                  color: selected ? AppColors.accentFg : AppColors.darkFg2,
                 ),
               ),
             ),
@@ -236,20 +235,20 @@ class _DriverFormSheetState extends State<DriverFormSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          border: Border.all(color: missing ? AppColors.error : AppColors.grey300),
-          borderRadius: BorderRadius.circular(8),
-          color: AppColors.white,
+          border: Border.all(color: missing ? AppColors.bad : AppColors.darkLine),
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          color: AppColors.darkBg3,
         ),
         child: Row(
           children: [
             Icon(Icons.calendar_today_outlined, size: 16,
-                color: missing ? AppColors.error : AppColors.grey400),
+                color: missing ? AppColors.bad : AppColors.darkFg3),
             const SizedBox(width: 10),
             Text(
               date != null ? '${date.day}/${date.month}/${date.year}' : 'Select date',
               style: TextStyle(
-                color: date != null ? AppColors.grey900 : (missing ? AppColors.error : AppColors.grey400),
-                fontSize: 14,
+                color: date != null ? AppColors.darkFg0 : (missing ? AppColors.bad : AppColors.darkFg3),
+                fontSize: 13,
               ),
             ),
           ],
@@ -276,14 +275,7 @@ class _DriverFormSheetState extends State<DriverFormSheet> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.grey300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary)),
-          ),
+          decoration: InputDecoration(hintText: hint),
           validator: validator ?? (required ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null : null),
         ),
       ],
