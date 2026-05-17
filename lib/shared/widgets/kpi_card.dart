@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cruzo/core/theme/dls/dls.dart';
-import '../../core/theme/app_text_styles.dart';
+import 'sparkline.dart';
 
 class KpiCard extends StatelessWidget {
   final String label;
@@ -12,6 +12,7 @@ class KpiCard extends StatelessWidget {
   final Color color;
   final Color bgColor;
   final VoidCallback? onTap;
+  final List<double>? sparkData;
 
   const KpiCard({
     super.key,
@@ -24,6 +25,7 @@ class KpiCard extends StatelessWidget {
     this.delta,
     this.deltaUp,
     this.onTap,
+    this.sparkData,
   });
 
   @override
@@ -88,6 +90,18 @@ class KpiCard extends StatelessWidget {
                 style: AppTextStyles.caption.copyWith(color: AppColors.darkFg2),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (sparkData != null && sparkData!.length >= 2) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 28,
+                child: Sparkline(
+                  data: sparkData!,
+                  color: color,
+                  height: 28,
+                  width: double.infinity,
+                ),
               ),
             ],
           ],

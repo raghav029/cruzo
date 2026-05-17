@@ -34,6 +34,8 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
   late final TextEditingController _creditLimit;
   String _billingCycle = 'MONTHLY';
   bool _active = true;
+  late final TextEditingController _maxBookingValue;
+  List<String> _allowedVehicleTypes = [];
 
   @override
   void initState() {
@@ -47,6 +49,9 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
         text: c != null && c.creditLimit > 0 ? c.creditLimit.toStringAsFixed(0) : '');
     _billingCycle = c?.billingCycle ?? 'MONTHLY';
     _active = c?.active ?? true;
+    _maxBookingValue = TextEditingController(
+        text: c?.maxBookingValue != null ? c!.maxBookingValue!.toStringAsFixed(0) : '');
+    _allowedVehicleTypes = c?.allowedVehicleTypes ?? [];
   }
 
   @override
@@ -56,6 +61,7 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
     _address.dispose();
     _email.dispose();
     _creditLimit.dispose();
+    _maxBookingValue.dispose();
     super.dispose();
   }
 
@@ -68,6 +74,11 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
       'billingEmail': _email.text.trim(),
       'billingCycle': _billingCycle,
       'creditLimit': double.tryParse(_creditLimit.text.trim()) ?? 0,
+      if (_maxBookingValue.text.isNotEmpty)
+        'maxBookingValue': double.tryParse(_maxBookingValue.text.trim()),
+      'allowedVehicleTypes': _allowedVehicleTypes.isEmpty
+          ? null
+          : _allowedVehicleTypes.join(','),
       if (widget.client != null) 'active': _active,
     };
     if (widget.client == null) {
@@ -162,6 +173,52 @@ class _ClientFormSheetState extends State<ClientFormSheet> {
                           ],
                         ),
                       ],
+                      const SizedBox(height: 16),
+                      Text('Travel Policy',
+                          style: AppTextStyles.label.copyWith(color: AppColors.darkFg3)),
+                      const SizedBox(height: 4),
+                      Text('Leave blank for no restrictions',
+                          style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3)),
+                      const SizedBox(height: 8),
+                      _field('Max Booking Value (₹)', _maxBookingValue, hint: 'e.g. 5000',
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (v) {
+                            if (v != null && v.isNotEmpty && double.tryParse(v) == null) {
+                              return 'Enter valid amount';
+                            }
+                            return null;
+                          }),
+                      const SizedBox(height: 12),
+                      Text('Allowed Vehicle Types',
+                          style: AppTextStyles.label.copyWith(color: AppColors.darkFg3)),
+                      const SizedBox(height: 4),
+                      Text('Tap to toggle. None selected = all allowed.',
+                          style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3)),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        children: ['SEDAN', 'SUV', 'LUXURY'].map((type) {
+                          final selected = _allowedVehicleTypes.contains(type);
+                          return FilterChip(
+                            label: Text(type,
+                                style: AppTextStyles.bodySm.copyWith(
+                                    color: selected ? AppColors.accent : AppColors.darkFg2)),
+                            selected: selected,
+                            onSelected: (v) => setState(() {
+                              if (v) {
+                                _allowedVehicleTypes.add(type);
+                              } else {
+                                _allowedVehicleTypes.remove(type);
+                              }
+                            }),
+                            backgroundColor: AppColors.darkBg3,
+                            selectedColor: AppColors.accentBg,
+                            checkmarkColor: AppColors.accent,
+                            side: BorderSide(
+                                color: selected ? AppColors.accent : AppColors.darkLine),
+                          );
+                        }).toList(),
+                      ),
                       const SizedBox(height: 28),
                       SizedBox(
                         width: double.infinity,

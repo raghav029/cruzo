@@ -26,6 +26,23 @@ import '../../features/fleet_manager/reports/presentation/screens/reports_screen
 import '../../features/fleet_manager/reports/presentation/bloc/report_bloc.dart';
 import '../../features/fleet_manager/daily_schedules/presentation/screens/daily_schedules_screen.dart';
 import '../../features/fleet_manager/daily_schedules/presentation/bloc/daily_schedule_bloc.dart';
+import '../../features/employee/shell/employee_shell.dart';
+import '../../features/corporate_admin/shell/corporate_admin_shell.dart';
+import '../../features/employee/home/presentation/screens/employee_home_screen.dart';
+import '../../features/employee/book_ride/presentation/bloc/book_ride_bloc.dart';
+import '../../features/employee/book_ride/presentation/screens/employee_book_ride_screen.dart';
+import '../../features/employee/my_trips/presentation/screens/employee_my_trips_screen.dart';
+import '../../features/employee/daily_schedule/presentation/bloc/employee_schedule_bloc.dart';
+import '../../features/employee/daily_schedule/presentation/screens/employee_daily_schedule_screen.dart';
+import '../../features/driver/shell/driver_shell.dart';
+import '../../features/driver/my_trip/presentation/bloc/driver_trip_bloc.dart';
+import '../../features/driver/my_trip/presentation/screens/driver_home_screen.dart';
+import '../../features/driver/profile/presentation/screens/driver_profile_screen.dart';
+import '../../features/driver/trip_history/presentation/screens/driver_trip_history_screen.dart';
+import '../../features/driver/stats/presentation/screens/driver_stats_screen.dart';
+import '../../features/employee/profile/presentation/screens/employee_profile_screen.dart';
+import '../../features/corporate_admin/employees/presentation/screens/corp_employees_screen.dart';
+import '../../features/corporate_admin/employees/presentation/view_models/corp_employees_view_model.dart';
 import '../di/injection.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
@@ -37,15 +54,25 @@ GoRouter createRouter(AuthBloc authBloc) {
       final onLogin = state.matchedLocation == AppRoutes.loginPath;
 
       if (authState is AuthLoading || authState is AuthInitial) return null;
-      if (authState is AuthUnauthenticated && !onLogin)
-        return AppRoutes.loginPath;
-      if (authState is AuthAuthenticated && onLogin) {
-        return switch (authState.role) {
+      if (authState is AuthUnauthenticated && !onLogin) return AppRoutes.loginPath;
+      if (authState is AuthAuthenticated) {
+        final loc = state.matchedLocation;
+        final home = switch (authState.role) {
           AppRole.fleetManager => AppRoutes.fleetDashboardPath,
+          AppRole.corporateAdmin => AppRoutes.corpAdminBookingsPath,
           AppRole.employee => AppRoutes.employeeHomePath,
           AppRole.driver => AppRoutes.driverMyTripPath,
-          _ => AppRoutes.fleetDashboardPath,
+          _ => AppRoutes.loginPath,
         };
+        if (onLogin) return home;
+        final isValidPath = switch (authState.role) {
+          AppRole.fleetManager => loc.startsWith('/fleet/'),
+          AppRole.corporateAdmin => loc.startsWith('/corp/'),
+          AppRole.employee => loc.startsWith('/employee/'),
+          AppRole.driver => loc.startsWith('/driver/'),
+          _ => false,
+        };
+        if (!isValidPath) return home;
       }
       return null;
     },
@@ -147,17 +174,110 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
 
       // Employee routes
-      GoRoute(
-        name: AppRoutes.employeeHome,
-        path: AppRoutes.employeeHomePath,
-        builder: (_, __) => const _Placeholder('Employee Home'),
+      ShellRoute(
+        builder: (context, state, child) => MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => getIt<BookingBloc>()),
+            BlocProvider(create: (_) => getIt<EmployeeScheduleBloc>()),
+            BlocProvider(create: (_) => getIt<BookRideBloc>()),
+          ],
+          child: EmployeeShell(child: child),
+        ),
+        routes: [
+          GoRoute(
+            name: AppRoutes.employeeHome,
+            path: AppRoutes.employeeHomePath,
+            builder: (_, __) => const EmployeeHomeScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.employeeBookRide,
+            path: AppRoutes.employeeBookRidePath,
+            builder: (_, __) => const EmployeeBookRideScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.employeeMyTrips,
+            path: AppRoutes.employeeMyTripsPath,
+            builder: (_, __) => const EmployeeMyTripsScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.employeeDailySchedule,
+            path: AppRoutes.employeeDailySchedulePath,
+            builder: (_, __) => const EmployeeDailyScheduleScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.employeeProfile,
+            path: AppRoutes.employeeProfilePath,
+            builder: (_, __) => const EmployeeProfileScreen(),
+          ),
+        ],
+      ),
+
+      // Corporate Admin routes
+      ShellRoute(
+        builder: (context, state, child) => BlocProvider(
+          create: (_) => getIt<BookingBloc>(),
+          child: CorporateAdminShell(child: child),
+        ),
+        routes: [
+          GoRoute(
+            name: AppRoutes.corpAdminBookings,
+            path: AppRoutes.corpAdminBookingsPath,
+            builder: (_, __) => const BookingsScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.corpAdminInvoices,
+            path: AppRoutes.corpAdminInvoicesPath,
+            builder: (_, __) => BlocProvider(
+              create: (_) => getIt<InvoiceBloc>(),
+              child: const InvoicesScreen(),
+            ),
+          ),
+          GoRoute(
+            name: AppRoutes.corpAdminReports,
+            path: AppRoutes.corpAdminReportsPath,
+            builder: (_, __) => BlocProvider(
+              create: (_) => getIt<ReportBloc>(),
+              child: const ReportsScreen(),
+            ),
+          ),
+          GoRoute(
+            name: AppRoutes.corpAdminEmployees,
+            path: AppRoutes.corpAdminEmployeesPath,
+            builder: (_, __) => CorpEmployeesScreen(
+              viewModel: getIt<CorpEmployeesViewModel>(),
+            ),
+          ),
+        ],
       ),
 
       // Driver routes
-      GoRoute(
-        name: AppRoutes.driverMyTrip,
-        path: AppRoutes.driverMyTripPath,
-        builder: (_, __) => const _Placeholder('Driver Trip'),
+      ShellRoute(
+        builder: (_, __, child) => DriverShell(child: child),
+        routes: [
+          GoRoute(
+            name: AppRoutes.driverMyTrip,
+            path: AppRoutes.driverMyTripPath,
+            builder: (_, __) => BlocProvider(
+              create: (_) => getIt<DriverTripBloc>(),
+              child: const DriverHomeScreen(),
+            ),
+          ),
+          GoRoute(
+            name: AppRoutes.driverProfile,
+            path: AppRoutes.driverProfilePath,
+            builder: (_, __) => const DriverProfileScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.driverTripHistory,
+            path: AppRoutes.driverTripHistoryPath,
+            builder: (_, __) => const DriverTripHistoryScreen(),
+          ),
+          GoRoute(
+            name: AppRoutes.driverStats,
+            path: AppRoutes.driverStatsPath,
+            builder: (_, __) => const DriverStatsScreen(),
+          ),
+        ],
       ),
     ],
   );

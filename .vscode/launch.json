@@ -1,11 +1,44 @@
 {
   "version": "0.2.0",
   "configurations": [
+    
     {
-      "name": "cruzo: Fleet (Chrome)",
+      "name": "Employee",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_employee.dart",
+      "flutterMode": "debug",
+      "args": [
+        "--flavor", "employee",
+        "--dart-define-from-file=env.json"
+      ]
+    },
+    {
+      "name": "Driver",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_driver.dart",
+      "flutterMode": "debug",
+      "args": [
+        "--flavor", "driver",
+        "--dart-define-from-file=env.json"
+      ]
+    },
+    {
+      "name": "Fleet Manager — Chrome",
       "request": "launch",
       "type": "dart",
       "program": "lib/main_fleet.dart",
+      "deviceId": "chrome",
+      "args": [
+        "--dart-define-from-file=env.json"
+      ]
+    },
+    {
+      "name": "Corporate Admin — Chrome",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_corporate_admin.dart",
       "deviceId": "chrome",
       "args": [
         "--dart-define-from-file=env.json"

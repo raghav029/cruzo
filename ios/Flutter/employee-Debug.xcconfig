@@ -1,0 +1,4 @@
+#include "Debug.xcconfig"
+FLUTTER_TARGET=lib/main_employee.dart
+PRODUCT_BUNDLE_IDENTIFIER=com.cruzo.employee
+INFOPLIST_KEY_CFBundleDisplayName=Cruzo

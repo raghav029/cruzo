@@ -1,3 +1,12 @@
+class TripHourStat {
+  final String label;
+  final double value;
+  const TripHourStat({required this.label, required this.value});
+
+  factory TripHourStat.fromJson(Map<String, dynamic> j) =>
+      TripHourStat(label: j['label'] ?? '', value: (j['value'] ?? 0).toDouble());
+}
+
 class DashboardSummary {
   final int tripsToday;
   final int activeTrips;
@@ -13,6 +22,14 @@ class DashboardSummary {
   final int totalBookingsThisMonth;
   final double revenueThisMonth;
 
+  final List<double> tripsSparkData;
+  final List<double> revenueSparkData;
+  final List<double> unassignedSparkData;
+
+  final List<TripHourStat> tripsByHourToday;
+  final List<TripHourStat> tripsByHour7d;
+  final List<TripHourStat> tripsByHour30d;
+
   const DashboardSummary({
     required this.tripsToday,
     required this.activeTrips,
@@ -27,7 +44,23 @@ class DashboardSummary {
     required this.expiringDocuments,
     required this.totalBookingsThisMonth,
     required this.revenueThisMonth,
+    required this.tripsSparkData,
+    required this.revenueSparkData,
+    required this.unassignedSparkData,
+    required this.tripsByHourToday,
+    required this.tripsByHour7d,
+    required this.tripsByHour30d,
   });
+
+  static List<double> _parseDoubleList(dynamic v) {
+    if (v == null) return [];
+    return (v as List).map((e) => (e as num).toDouble()).toList();
+  }
+
+  static List<TripHourStat> _parseHourly(dynamic v) {
+    if (v == null) return [];
+    return (v as List).map((e) => TripHourStat.fromJson(e as Map<String, dynamic>)).toList();
+  }
 
   factory DashboardSummary.fromJson(Map<String, dynamic> json) => DashboardSummary(
         tripsToday: json['tripsToday'] ?? 0,
@@ -43,5 +76,11 @@ class DashboardSummary {
         expiringDocuments: json['expiringDocuments'] ?? 0,
         totalBookingsThisMonth: json['totalBookingsThisMonth'] ?? 0,
         revenueThisMonth: (json['revenueThisMonth'] ?? 0).toDouble(),
+        tripsSparkData: _parseDoubleList(json['tripsSparkData']),
+        revenueSparkData: _parseDoubleList(json['revenueSparkData']),
+        unassignedSparkData: _parseDoubleList(json['unassignedSparkData']),
+        tripsByHourToday: _parseHourly(json['tripsByHourToday']),
+        tripsByHour7d: _parseHourly(json['tripsByHour7d']),
+        tripsByHour30d: _parseHourly(json['tripsByHour30d']),
       );
 }

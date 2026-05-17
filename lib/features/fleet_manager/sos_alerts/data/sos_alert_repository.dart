@@ -38,4 +38,10 @@ class SosAlertRepoImpl implements SosAlertRepo {
         );
         return SosAlert.fromJson(resp.data['data'] as Map<String, dynamic>);
       }, url: SosAlertEndpoints.resolve(id));
+
+  @override
+  Future<ApiResult<void>> send(String message) =>
+      executeRetrofitCall<void>(() async {
+        await _dio.post(SosAlertEndpoints.base, data: {'message': message});
+      }, url: SosAlertEndpoints.base);
 }

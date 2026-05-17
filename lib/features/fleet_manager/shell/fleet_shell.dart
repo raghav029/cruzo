@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/dls/dls.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/theme/theme_service.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../shared/widgets/change_password_sheet.dart';
+import '../dashboard/presentation/bloc/dashboard_bloc.dart';
+import '../dashboard/presentation/bloc/dashboard_state.dart';
 
 class FleetShell extends StatelessWidget {
   final Widget child;
@@ -374,7 +378,7 @@ const _kNav = [
         label: 'Bookings',
         icon: Icons.book_online_rounded,
         route: AppRoutes.fleetBookingsPath,
-        badge: 4,
+        badge: 0,
         alert: false,
       ),
       (
@@ -473,6 +477,31 @@ class _SidebarContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
 
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      bloc: getIt<DashboardBloc>(),
+      builder: (context, dashState) {
+        final pendingApprovals = dashState is DashboardLoaded
+            ? dashState.summary.pendingApprovals
+            : 0;
+        return _SidebarContentInner(
+          location: location,
+          pendingApprovals: pendingApprovals,
+        );
+      },
+    );
+  }
+}
+
+class _SidebarContentInner extends StatelessWidget {
+  final String location;
+  final int pendingApprovals;
+  const _SidebarContentInner({
+    required this.location,
+    required this.pendingApprovals,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -550,7 +579,7 @@ class _SidebarContent extends StatelessWidget {
                     label: item.label,
                     route: item.route,
                     location: location,
-                    badge: item.badge,
+                    badge: item.id == 'bookings' ? pendingApprovals : item.badge,
                     alert: item.alert,
                   ),
               ],
@@ -563,6 +592,13 @@ class _SidebarContent extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 12),
           height: 1,
           color: AppColors.darkLine,
+        ),
+        _NavItem(
+          icon: Icons.lock_outline,
+          label: 'Change Password',
+          route: '',
+          location: location,
+          onTap: () => ChangePasswordSheet.show(context),
         ),
         _NavItem(
           icon: Icons.logout_rounded,

@@ -2,14 +2,17 @@ import 'package:equatable/equatable.dart';
 
 enum AppRole { fleetManager, employee, driver, superAdmin, corporateAdmin, unknown }
 
-AppRole roleFromString(String role) => switch (role) {
-      'ROLE_FLEET_MANAGER' => AppRole.fleetManager,
-      'ROLE_EMPLOYEE' => AppRole.employee,
-      'ROLE_DRIVER' => AppRole.driver,
-      'ROLE_SUPER_ADMIN' => AppRole.superAdmin,
-      'ROLE_CORPORATE_ADMIN' => AppRole.corporateAdmin,
-      _ => AppRole.unknown,
-    };
+AppRole roleFromString(String role) {
+  final r = role.startsWith('ROLE_') ? role : 'ROLE_$role';
+  return switch (r) {
+    'ROLE_FLEET_MANAGER' => AppRole.fleetManager,
+    'ROLE_EMPLOYEE' => AppRole.employee,
+    'ROLE_DRIVER' => AppRole.driver,
+    'ROLE_SUPER_ADMIN' => AppRole.superAdmin,
+    'ROLE_CORPORATE_ADMIN' => AppRole.corporateAdmin,
+    _ => AppRole.unknown,
+  };
+}
 
 abstract class AuthState extends Equatable {
   const AuthState();

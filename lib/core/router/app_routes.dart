@@ -37,7 +37,27 @@ abstract final class AppRoutes {
   static const employeeDailySchedule = 'employee-daily-schedule';
   static const employeeDailySchedulePath = '/employee/daily-schedule';
 
+  // Corporate Admin
+  static const corpAdminBookings = 'corp-admin-bookings';
+  static const corpAdminBookingsPath = '/corp/bookings';
+  static const corpAdminInvoices = 'corp-admin-invoices';
+  static const corpAdminInvoicesPath = '/corp/invoices';
+  static const corpAdminReports = 'corp-admin-reports';
+  static const corpAdminReportsPath = '/corp/reports';
+  static const corpAdminEmployees = 'corp-admin-employees';
+  static const corpAdminEmployeesPath = '/corp/employees';
+
   // Driver
   static const driverMyTrip = 'driver-my-trip';
   static const driverMyTripPath = '/driver/trip';
+  static const driverProfile = 'driver-profile';
+  static const driverProfilePath = '/driver/profile';
+  static const driverTripHistory = 'driver-trip-history';
+  static const driverTripHistoryPath = '/driver/history';
+  static const driverStats = 'driver-stats';
+  static const driverStatsPath = '/driver/stats';
+
+  // Employee Profile
+  static const employeeProfile = 'employee-profile';
+  static const employeeProfilePath = '/employee/profile';
 }

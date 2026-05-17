@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/network/result.dart';
 import '../../../../../core/theme/dls/dls.dart';
 import '../../../../../core/di/injection.dart';
-import '../../../bookings/domain/booking_repo.dart';
+import '../../../../../shared/widgets/booking_map_card.dart';
+import '../../../bookings/domain/booking_status.dart';
 import '../../../bookings/domain/booking.dart';
-import '../../../bookings/presentation/screens/booking_detail_sheet.dart';
 import '../../../bookings/presentation/bloc/booking_bloc.dart';
+import '../../../bookings/presentation/screens/booking_detail_sheet.dart';
+import '../view_models/daily_trips_view_model.dart';
 
 class DailyTripsScreen extends StatefulWidget {
   const DailyTripsScreen({super.key});
@@ -17,103 +18,84 @@ class DailyTripsScreen extends StatefulWidget {
 
 class _DailyTripsScreenState extends State<DailyTripsScreen> {
   DateTime _selectedDate = DateTime.now();
-  bool _loading = true;
-  String? _error;
-  List<Booking> _bookings = [];
+  Booking? _selected;
+  String _filter = 'all';
+  late final DailyTripsViewModel _vm;
 
   static const _activeStatuses = [
-    'DRIVER_ASSIGNED',
-    'DRIVER_EN_ROUTE',
-    'ARRIVED',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'APPROVED',
+    BookingStatus.approved,
+    BookingStatus.driverAssigned,
+    BookingStatus.driverEnRoute,
+    BookingStatus.arrived,
+    BookingStatus.inProgress,
+    BookingStatus.completed,
   ];
+
+  bool get _loading => _vm.isLoading;
+  String? get _error => _vm.error;
+  List<Booking> get _bookings => _vm.bookings
+      .where((b) => _activeStatuses.contains(b.statusEnum))
+      .toList()
+    ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
   @override
   void initState() {
     super.initState();
+    _vm = getIt<DailyTripsViewModel>();
     _load();
   }
 
-  String _dateParam(DateTime d) {
-    final y = d.year.toString().padLeft(4, '0');
-    final mo = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '${y}-${mo}-${day}T00:00:00Z';
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    final repo = getIt<BookingRepo>();
-    final from = _dateParam(_selectedDate);
-    final to = _dateParam(_selectedDate.add(const Duration(days: 1)));
-    final result = await repo.list(fromDate: from, toDate: to, size: 100);
+    await _vm.load(_selectedDate);
     if (!mounted) return;
-    switch (result) {
-      case Success(:final value):
-        setState(() {
-          _loading = false;
-          _bookings =
-              value.where((b) => _activeStatuses.contains(b.status)).toList()
-                ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
-        });
-      case Failure(:final message):
-        setState(() {
-          _loading = false;
-          _error = message;
-        });
-    }
+    setState(() {
+      final filtered = _bookings;
+      if (_selected != null) {
+        _selected = filtered.firstWhere(
+          (b) => b.id == _selected!.id,
+          orElse: () => filtered.isNotEmpty ? filtered.first : _selected!,
+        );
+      } else if (filtered.isNotEmpty) {
+        _selected = filtered.first;
+      }
+    });
   }
 
-  void _prevDay() {
-    setState(
-      () => _selectedDate = _selectedDate.subtract(const Duration(days: 1)),
-    );
-    _load();
-  }
-
-  void _nextDay() {
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
-    if (_selectedDate.isBefore(tomorrow)) {
-      setState(
-        () => _selectedDate = _selectedDate.add(const Duration(days: 1)),
-      );
-      _load();
-    }
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 90)),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
-    );
-    if (picked != null && mounted) {
-      setState(() => _selectedDate = picked);
-      _load();
-    }
+  List<Booking> get _visible {
+    return switch (_filter) {
+      'unassigned' => _bookings.where((b) => b.statusEnum.needsDriver).toList(),
+      'assigned' =>
+        _bookings
+            .where((b) => b.statusEnum == BookingStatus.driverAssigned)
+            .toList(),
+      'live' => _bookings.where((b) => b.statusEnum.isActive).toList(),
+      'done' => _bookings.where((b) => b.statusEnum.isCompleted).toList(),
+      _ => _bookings,
+    };
   }
 
   bool get _isToday {
-    final now = DateTime.now();
-    return _selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day;
+    final n = DateTime.now();
+    return _selectedDate.year == n.year &&
+        _selectedDate.month == n.month &&
+        _selectedDate.day == n.day;
   }
 
-  String _headerLabel() {
+  String _dayLabel() {
     if (_isToday) return 'Today';
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    if (_selectedDate.year == yesterday.year &&
-        _selectedDate.month == yesterday.month &&
-        _selectedDate.day == yesterday.day)
+    final y = DateTime.now().subtract(const Duration(days: 1));
+    if (_selectedDate.year == y.year &&
+        _selectedDate.month == y.month &&
+        _selectedDate.day == y.day) {
       return 'Yesterday';
-    final months = [
+    }
+    const months = [
       'Jan',
       'Feb',
       'Mar',
@@ -127,307 +109,478 @@ class _DailyTripsScreenState extends State<DailyTripsScreen> {
       'Nov',
       'Dec',
     ];
-    return '${_selectedDate.day} ${months[_selectedDate.month - 1]} ${_selectedDate.year}';
-  }
-
-  Map<String, List<Booking>> get _grouped {
-    final order = [
-      'IN_PROGRESS',
-      'DRIVER_EN_ROUTE',
-      'ARRIVED',
-      'DRIVER_ASSIGNED',
-      'APPROVED',
-      'COMPLETED',
-    ];
-    final map = <String, List<Booking>>{};
-    for (final b in _bookings) {
-      map.putIfAbsent(b.status, () => []).add(b);
-    }
-    final sorted = <String, List<Booking>>{};
-    for (final s in order) {
-      if (map.containsKey(s)) sorted[s] = map[s]!;
-    }
-    return sorted;
+    return '${_selectedDate.day} ${months[_selectedDate.month - 1]}';
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<BookingBloc>(),
-      child: BlocListener<BookingBloc, dynamic>(
-        listener: (context, state) => _load(),
-        child: Scaffold(
-          backgroundColor: AppColors.darkBg1,
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _Header(
-                  label: _headerLabel(),
-                  isToday: _isToday,
-                  onPrev: _prevDay,
-                  onNext: _nextDay,
-                  onTap: _pickDate,
-                  tripCount: _bookings.length,
-                ),
-              ),
-              if (_loading)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_error != null)
-                SliverFillRemaining(
-                  child: _ErrorView(message: _error!, onRetry: _load),
-                )
-              else if (_bookings.isEmpty)
-                SliverFillRemaining(child: _EmptyView(isToday: _isToday))
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) {
-                        final groups = _grouped.entries.toList();
-                        int idx = 0;
-                        for (final entry in groups) {
-                          if (i == idx) {
-                            return _GroupHeader(
-                              status: entry.key,
-                              count: entry.value.length,
-                            );
-                          }
-                          idx++;
-                          for (final booking in entry.value) {
-                            if (i == idx) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: _TripCard(
-                                  booking: booking,
-                                  onTap: () {
-                                    BookingDetailSheet.show(
-                                      context,
-                                      booking: booking,
-                                    );
-                                  },
-                                ),
-                              );
-                            }
-                            idx++;
-                          }
-                        }
-                        return null;
-                      },
-                      childCount: _grouped.entries.fold(
-                        0,
-                        (sum, e) => sum! + 1 + e.value.length,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => BlocProvider(
+        create: (_) => getIt<BookingBloc>(),
+        child: BlocListener<BookingBloc, dynamic>(
+          listener: (_, _) => _load(),
+          child: Scaffold(
+            backgroundColor: AppColors.darkBg1,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 780;
+              if (wide) return _WideLayout(screen: this);
+              return _NarrowLayout(screen: this);
+            },
           ),
         ),
+      ),
       ),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  final String label;
-  final bool isToday;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final VoidCallback onTap;
-  final int tripCount;
+// ─── Wide layout (tablet / web) ───────────────────────────────────────────────
 
-  const _Header({
-    required this.label,
-    required this.isToday,
-    required this.onPrev,
-    required this.onNext,
-    required this.onTap,
-    required this.tripCount,
-  });
+class _WideLayout extends StatelessWidget {
+  final _DailyTripsScreenState screen;
+  const _WideLayout({required this.screen});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Row(
+      children: [
+        SizedBox(
+          width: 340,
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(right: BorderSide(color: AppColors.darkLine)),
+            ),
+            child: Column(
+              children: [
+                _ListHeader(screen: screen),
+                Expanded(child: _TripList(screen: screen, wide: true)),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: screen._selected == null
+              ? _EmptyDetail()
+              : _DetailPanel(
+                  booking: screen._selected!,
+                  onRefresh: screen._load,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Narrow layout (mobile) ───────────────────────────────────────────────────
+
+class _NarrowLayout extends StatelessWidget {
+  final _DailyTripsScreenState screen;
+  const _NarrowLayout({required this.screen});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _ListHeader(screen: screen),
+        Expanded(child: _TripList(screen: screen, wide: false)),
+      ],
+    );
+  }
+}
+
+// ─── Shared list header ───────────────────────────────────────────────────────
+
+class _ListHeader extends StatelessWidget {
+  final _DailyTripsScreenState screen;
+  const _ListHeader({required this.screen});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = screen;
+    final needDriver = s._bookings
+        .where((b) => b.statusEnum.needsDriver)
+        .length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
+          child: Row(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Daily Trips',
-                    style: AppTextStyles.h2.copyWith(color: AppColors.darkFg0),
+                  Row(
+                    children: [
+                      Text(
+                        s._dayLabel(),
+                        style: AppTextStyles.h3.copyWith(
+                          color: AppColors.darkFg0,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '·',
+                        style: AppTextStyles.bodySm.copyWith(
+                          color: AppColors.darkFg3,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: s._selectedDate,
+                            firstDate: DateTime.now().subtract(
+                              const Duration(days: 90),
+                            ),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 30),
+                            ),
+                          );
+                          if (picked != null) {
+                            // ignore: invalid_use_of_protected_member
+                            s.setState(() => s._selectedDate = picked);
+                            s._load();
+                          }
+                        },
+                        child: Text(
+                          _fullDate(s._selectedDate),
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Text(
-                    '$tripCount active trips',
-                    style: AppTextStyles.bodySm.copyWith(
-                      color: AppColors.darkFg2,
+                    '${s._bookings.length} trips${needDriver > 0 ? ' · $needDriver need driver' : ''}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.darkFg3,
                     ),
                   ),
                 ],
               ),
               const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.chevron_left, color: AppColors.darkFg2),
-                onPressed: onPrev,
-                padding: EdgeInsets.zero,
-              ),
-              GestureDetector(
-                onTap: onTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isToday ? AppColors.accentBg : AppColors.darkBg3,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isToday ? AppColors.accent : AppColors.darkLine,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 13,
-                        color: isToday ? AppColors.accent : AppColors.darkFg2,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        label,
-                        style: AppTextStyles.h4.copyWith(
-                          color: isToday ? AppColors.accent : AppColors.darkFg1,
+              Row(
+                children: [
+                  _IconBtn(
+                    icon: Icons.chevron_left,
+                    onTap: () {
+                      // ignore: invalid_use_of_protected_member
+                      s.setState(
+                        () => s._selectedDate = s._selectedDate.subtract(
+                          const Duration(days: 1),
                         ),
-                      ),
-                    ],
+                      );
+                      s._load();
+                    },
                   ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right, color: AppColors.darkFg2),
-                onPressed: onNext,
-                padding: EdgeInsets.zero,
+                  _IconBtn(
+                    icon: Icons.chevron_right,
+                    onTap: () {
+                      // ignore: invalid_use_of_protected_member
+                      s.setState(
+                        () => s._selectedDate = s._selectedDate.add(
+                          const Duration(days: 1),
+                        ),
+                      );
+                      s._load();
+                    },
+                  ),
+                  _IconBtn(icon: Icons.refresh_outlined, onTap: s._load),
+                ],
               ),
             ],
           ),
-        ],
+        ),
+        const SizedBox(height: 10),
+        _FilterBar(screen: screen),
+        const Divider(height: 1, color: AppColors.darkLine),
+      ],
+    );
+  }
+
+  String _fullDate(DateTime d) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+}
+
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _IconBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.all(6),
+      child: Icon(icon, size: 18, color: AppColors.darkFg2),
+    ),
+  );
+}
+
+class _FilterBar extends StatelessWidget {
+  final _DailyTripsScreenState screen;
+  const _FilterBar({required this.screen});
+
+  static const _chips = [
+    ('all', 'All'),
+    ('unassigned', 'Unassigned'),
+    ('assigned', 'Assigned'),
+    ('live', 'Live'),
+    ('done', 'Done'),
+  ];
+
+  int _count(_DailyTripsScreenState s, String f) => switch (f) {
+    'unassigned' => s._bookings.where((b) => b.statusEnum.needsDriver).length,
+    'assigned' =>
+      s._bookings
+          .where((b) => b.statusEnum == BookingStatus.driverAssigned)
+          .length,
+    'live' => s._bookings.where((b) => b.statusEnum.isActive).length,
+    'done' => s._bookings.where((b) => b.statusEnum.isCompleted).length,
+    _ => s._bookings.length,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        children: _chips.map((chip) {
+          final (key, label) = chip;
+          final active = screen._filter == key;
+          final count = _count(screen, key);
+          return GestureDetector(
+            // ignore: invalid_use_of_protected_member
+            onTap: () => screen.setState(() => screen._filter = key),
+            child: Container(
+              margin: const EdgeInsets.only(right: 6, top: 4, bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: active
+                    ? AppColors.accent.withAlpha(20)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                border: Border.all(
+                  color: active ? AppColors.accent : AppColors.darkLine,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: AppTextStyles.label.copyWith(
+                      color: active ? AppColors.accent : AppColors.darkFg2,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$count',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.darkFg3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 }
 
-class _GroupHeader extends StatelessWidget {
-  final String status;
-  final int count;
-  const _GroupHeader({required this.status, required this.count});
+// ─── Trip list ────────────────────────────────────────────────────────────────
+
+class _TripList extends StatelessWidget {
+  final _DailyTripsScreenState screen;
+  final bool wide;
+  const _TripList({required this.screen, required this.wide});
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      'IN_PROGRESS' => ('In Progress', AppColors.good),
-      'DRIVER_EN_ROUTE' => ('En Route', AppColors.accent),
-      'ARRIVED' => ('Arrived', AppColors.accent),
-      'DRIVER_ASSIGNED' => ('Assigned', AppColors.info),
-      'APPROVED' => ('Approved — Awaiting Dispatch', AppColors.warn),
-      'COMPLETED' => ('Completed', AppColors.darkFg2),
-      _ => (status, AppColors.darkFg2),
-    };
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: AppTextStyles.bodySm.copyWith(
-              fontWeight: FontWeight.w700,
-              color: color,
+    if (screen._loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (screen._error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.bad, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              screen._error!,
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg1),
             ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            '$count',
-            style: AppTextStyles.bodySm.copyWith(color: color.withAlpha(128)),
-          ),
-        ],
-      ),
+            const SizedBox(height: 12),
+            TextButton(onPressed: screen._load, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+    final visible = screen._visible;
+    if (visible.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.directions_car_outlined,
+              size: 48,
+              color: AppColors.darkFg3,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No trips',
+              style: AppTextStyles.h4.copyWith(color: AppColors.darkFg1),
+            ),
+            Text(
+              'Nothing matches this filter.',
+              style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.all(10),
+      itemCount: visible.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 6),
+      itemBuilder: (ctx, i) {
+        final b = visible[i];
+        final isSelected = wide && screen._selected?.id == b.id;
+        return _TripCard(
+          booking: b,
+          selected: isSelected,
+          onTap: () {
+            if (wide) {
+              // ignore: invalid_use_of_protected_member
+              screen.setState(() => screen._selected = b);
+            } else {
+              showModalBottomSheet(
+                context: ctx,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => BlocProvider.value(
+                  value: ctx.read<BookingBloc>(),
+                  child: BookingDetailSheet(booking: b),
+                ),
+              );
+            }
+          },
+        );
+      },
     );
   }
 }
 
 class _TripCard extends StatelessWidget {
   final Booking booking;
+  final bool selected;
   final VoidCallback onTap;
-  const _TripCard({required this.booking, required this.onTap});
+  const _TripCard({
+    required this.booking,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isLive =
-        booking.status == 'IN_PROGRESS' ||
-        booking.status == 'DRIVER_EN_ROUTE' ||
-        booking.status == 'ARRIVED';
+    final isLive = booking.isActive;
+    final needsDriver = booking.statusEnum.needsDriver;
+
+    Color borderColor = AppColors.darkLine;
+    if (selected) {
+      borderColor = AppColors.accent;
+    } else if (isLive) {
+      borderColor = AppColors.good.withAlpha(100);
+    } else if (needsDriver) {
+      borderColor = AppColors.warn.withAlpha(100);
+    }
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.darkBg2,
+          color: selected ? AppColors.accent.withAlpha(12) : AppColors.darkBg2,
           borderRadius: BorderRadius.circular(AppRadii.md),
-          border: Border.all(
-            color: isLive ? AppColors.good.withAlpha(80) : AppColors.darkLine,
-            width: isLive ? 1.5 : 1,
-          ),
+          border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                _TimeChip(scheduledAt: booking.scheduledAt),
+                _timeChip(booking.scheduledAt),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    booking.corporateClientName ?? 'Unknown Client',
-                    style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (isLive)
+                if (isLive) ...[
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 7,
+                    height: 7,
                     decoration: const BoxDecoration(
                       color: AppColors.good,
                       shape: BoxShape.circle,
                     ),
                   ),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    booking.corporateClientName ?? '—',
+                    style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                _StatusDot(status: booking.statusEnum),
               ],
             ),
-            const SizedBox(height: 10),
-            _RouteRow(pickup: booking.pickupAddress, drop: booking.dropAddress),
+            const SizedBox(height: 8),
+            Text(
+              booking.employeeName ?? '—',
+              style: AppTextStyles.caption.copyWith(color: AppColors.darkFg2),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${_short(booking.pickupAddress)}  →  ${_short(booking.dropAddress)}',
+              style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
             if (booking.driverName != null) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               const Divider(height: 1, color: AppColors.darkLine),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   const Icon(
                     Icons.person_outline,
-                    size: 14,
+                    size: 13,
                     color: AppColors.darkFg3,
                   ),
                   const SizedBox(width: 4),
@@ -438,29 +591,51 @@ class _TripCard extends StatelessWidget {
                     ),
                   ),
                   if (booking.vehiclePlate != null) ...[
-                    const SizedBox(width: 12),
-                    const Icon(
-                      Icons.directions_car_outlined,
-                      size: 14,
-                      color: AppColors.darkFg3,
+                    const SizedBox(width: 10),
+                    Text(
+                      '·',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.darkFg3,
+                      ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
                       booking.vehiclePlate!,
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.darkFg2,
+                        fontFamily: 'monospace',
                       ),
                     ),
                   ],
-                  const Spacer(),
-                  if (booking.employeeName != null)
+                ],
+              ),
+            ] else if (needsDriver) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.warn.withAlpha(16),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
+                  border: Border.all(color: AppColors.warn.withAlpha(60)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_outlined,
+                      size: 13,
+                      color: AppColors.warn,
+                    ),
+                    const SizedBox(width: 5),
                     Text(
-                      booking.employeeName!,
+                      'No driver assigned',
                       style: AppTextStyles.caption.copyWith(
-                        color: AppColors.darkFg2,
+                        color: AppColors.warn,
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ],
           ],
@@ -468,28 +643,19 @@ class _TripCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class _TimeChip extends StatelessWidget {
-  final String scheduledAt;
-  const _TimeChip({required this.scheduledAt});
-
-  @override
-  Widget build(BuildContext context) {
-    String label;
+  Widget _timeChip(String iso) {
+    String label = '--:--';
     try {
-      final dt = DateTime.parse(scheduledAt).toLocal();
-      final h = dt.hour.toString().padLeft(2, '0');
-      final m = dt.minute.toString().padLeft(2, '0');
-      label = '$h:$m';
-    } catch (_) {
-      label = '--:--';
-    }
+      final dt = DateTime.parse(iso).toLocal();
+      label =
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {}
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.darkBg3,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadii.xs),
       ),
       child: Text(
         label,
@@ -500,90 +666,63 @@ class _TimeChip extends StatelessWidget {
       ),
     );
   }
+
+  String _short(String addr) {
+    final parts = addr.split(',');
+    return parts.first.trim();
+  }
 }
 
-class _RouteRow extends StatelessWidget {
-  final String pickup;
-  final String drop;
-  const _RouteRow({required this.pickup, required this.drop});
+class _StatusDot extends StatelessWidget {
+  final BookingStatus status;
+  const _StatusDot({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(
-                color: AppColors.good,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(width: 1, height: 18, color: AppColors.darkLine),
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: AppColors.bad,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                pickup,
-                style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                drop,
-                style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ],
-          ),
-        ),
-      ],
+    final color = status.color;
+    final label = switch (status) {
+      BookingStatus.inProgress => 'Live',
+      BookingStatus.driverEnRoute => 'En Route',
+      BookingStatus.arrived => 'Arrived',
+      BookingStatus.driverAssigned => 'Assigned',
+      BookingStatus.approved => 'Pending',
+      BookingStatus.completed => 'Done',
+      _ => status.displayName,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: color.withAlpha(60)),
+      ),
+      child: Text(label, style: AppTextStyles.caption.copyWith(color: color)),
     );
   }
 }
 
-class _EmptyView extends StatelessWidget {
-  final bool isToday;
-  const _EmptyView({required this.isToday});
+// ─── Right panel: trip detail ─────────────────────────────────────────────────
 
+class _EmptyDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.directions_car_outlined,
-            size: 56,
+          const Icon(
+            Icons.touch_app_outlined,
+            size: 48,
             color: AppColors.darkFg3,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
-            'No trips ${isToday ? 'today' : 'on this day'}',
-            style: AppTextStyles.h4.copyWith(color: AppColors.darkFg0),
+            'Select a trip',
+            style: AppTextStyles.h4.copyWith(color: AppColors.darkFg1),
           ),
-          const SizedBox(height: 4),
           Text(
-            'Active trips will appear here once assigned.',
-            style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg2),
-            textAlign: TextAlign.center,
+            'Click any trip on the left to see details.',
+            style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3),
           ),
         ],
       ),
@@ -591,27 +730,568 @@ class _EmptyView extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorView({required this.message, required this.onRetry});
+class _DetailPanel extends StatefulWidget {
+  final Booking booking;
+  final VoidCallback onRefresh;
+  const _DetailPanel({required this.booking, required this.onRefresh});
+
+  @override
+  State<_DetailPanel> createState() => _DetailPanelState();
+}
+
+class _DetailPanelState extends State<_DetailPanel> {
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.booking;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      b.corporateClientName ?? 'Trip Detail',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.darkFg0,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time_outlined,
+                          size: 13,
+                          color: AppColors.darkFg3,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _fmtTime(b.scheduledAt),
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: AppColors.darkFg2,
+                          ),
+                        ),
+                        if (b.vehicleTypeRequested != null) ...[
+                          const SizedBox(width: 10),
+                          const Icon(
+                            Icons.directions_car_outlined,
+                            size: 13,
+                            color: AppColors.darkFg3,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            b.vehicleTypeRequested!.toLowerCase(),
+                            style: AppTextStyles.bodySm.copyWith(
+                              color: AppColors.darkFg2,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 10),
+                        _StatusDot(status: b.statusEnum),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (b.isApproved)
+                FilledButton.icon(
+                  onPressed: () => BookingDetailSheet.show(
+                    context,
+                    booking: b,
+                    openAssign: true,
+                  ),
+                  icon: const Icon(Icons.person_add_outlined, size: 15),
+                  label: const Text('Assign driver'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.darkBg1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Map (if coords available)
+          if (b.hasCoords || b.hasDriverLocation) ...[
+            BookingMapCard(booking: b),
+            const SizedBox(height: AppSpacing.md),
+          ],
+
+          // Driver + Booking info cards row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _DriverCard(booking: b, onAssign: widget.onRefresh),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: _TripInfoCard(booking: b)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Route card
+          _RouteCard(booking: b),
+          const SizedBox(height: AppSpacing.md),
+
+          // Status timeline
+          _TimelineCard(booking: b),
+        ],
+      ),
+    );
+  }
+
+  String _fmtTime(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final h = dt.hour.toString().padLeft(2, '0');
+      final m = dt.minute.toString().padLeft(2, '0');
+      return '${dt.day} ${months[dt.month - 1]}, $h:$m IST';
+    } catch (_) {
+      return iso;
+    }
+  }
+}
+
+class _DriverCard extends StatelessWidget {
+  final Booking booking;
+  final VoidCallback onAssign;
+  const _DriverCard({required this.booking, required this.onAssign});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.cardPadH),
+      decoration: BoxDecoration(
+        color: AppColors.darkBg2,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: AppColors.bad),
-          const SizedBox(height: 12),
           Text(
-            message,
-            style: AppTextStyles.body.copyWith(color: AppColors.darkFg1),
-            textAlign: TextAlign.center,
+            'Driver & Vehicle',
+            style: AppTextStyles.tableHeader.copyWith(
+              color: AppColors.darkFg3,
+              letterSpacing: 0.05,
+            ),
           ),
-          const SizedBox(height: 16),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          const SizedBox(height: AppSpacing.sm),
+          if (booking.driverName != null) ...[
+            Row(
+              children: [
+                _Avatar(name: booking.driverName!),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        booking.driverName!,
+                        style: AppTextStyles.h4.copyWith(
+                          color: AppColors.darkFg0,
+                        ),
+                      ),
+                      if (booking.vehiclePlate != null)
+                        Text(
+                          booking.vehiclePlate!,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.darkFg3,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Column(
+              children: [
+                const Icon(
+                  Icons.warning_amber_outlined,
+                  size: 28,
+                  color: AppColors.warn,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'No driver assigned',
+                  style: AppTextStyles.label.copyWith(color: AppColors.darkFg1),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Assign before pickup to avoid 7am alert.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.darkFg3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => BookingDetailSheet.show(
+                      context,
+                      booking: booking,
+                      openAssign: true,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.sm),
+                      ),
+                    ),
+                    child: const Text('Assign driver'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _TripInfoCard extends StatelessWidget {
+  final Booking booking;
+  const _TripInfoCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.cardPadH),
+      decoration: BoxDecoration(
+        color: AppColors.darkBg2,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Trip info',
+            style: AppTextStyles.tableHeader.copyWith(
+              color: AppColors.darkFg3,
+              letterSpacing: 0.05,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _InfoRow(label: 'Employee', value: booking.employeeName ?? '—'),
+          _InfoRow(label: 'Status', value: booking.statusEnum.displayName),
+          if (booking.estimatedFare != null)
+            _InfoRow(
+              label: 'Est. Fare',
+              value: '₹${booking.estimatedFare!.toStringAsFixed(0)}',
+            ),
+          if (booking.finalFare != null)
+            _InfoRow(
+              label: 'Final Fare',
+              value: '₹${booking.finalFare!.toStringAsFixed(0)}',
+            ),
+          if (booking.notes != null)
+            _InfoRow(label: 'Notes', value: booking.notes!),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteCard extends StatelessWidget {
+  final Booking booking;
+  const _RouteCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.cardPadH),
+      decoration: BoxDecoration(
+        color: AppColors.darkBg2,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Route',
+            style: AppTextStyles.tableHeader.copyWith(
+              color: AppColors.darkFg3,
+              letterSpacing: 0.05,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.good,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Container(width: 1, height: 24, color: AppColors.darkLine),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.bad,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      booking.pickupAddress,
+                      style: AppTextStyles.bodySm.copyWith(
+                        color: AppColors.darkFg1,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      booking.dropAddress,
+                      style: AppTextStyles.bodySm.copyWith(
+                        color: AppColors.darkFg1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineCard extends StatelessWidget {
+  final Booking booking;
+  const _TimelineCard({required this.booking});
+
+  static const _steps = [
+    (BookingStatus.pendingApproval, 'Pending', Icons.pending_outlined),
+    (BookingStatus.approved, 'Approved', Icons.check_circle_outline),
+    (BookingStatus.driverAssigned, 'Assigned', Icons.person_pin_outlined),
+    (BookingStatus.driverEnRoute, 'En Route', Icons.directions_car_outlined),
+    (BookingStatus.arrived, 'Arrived', Icons.location_on_outlined),
+    (BookingStatus.inProgress, 'Trip', Icons.play_circle_outline),
+    (BookingStatus.completed, 'Done', Icons.flag_outlined),
+  ];
+
+  int _cur() {
+    for (var i = 0; i < _steps.length; i++) {
+      if (_steps[i].$1 == booking.statusEnum) return i;
+    }
+    return 0;
+  }
+
+  String? _ts(int i) => switch (i) {
+    1 => booking.approvedAt,
+    2 => booking.driverAssignedAt,
+    5 => booking.tripStartedAt,
+    6 => booking.tripCompletedAt,
+    _ => null,
+  };
+
+  String _fmtTs(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (booking.isCancelled) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.badBg,
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          border: Border.all(color: AppColors.bad.withAlpha(60)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.cancel_outlined, color: AppColors.bad, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              booking.statusEnum.displayName,
+              style: AppTextStyles.label.copyWith(color: AppColors.bad),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final cur = _cur();
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.cardPadH),
+      decoration: BoxDecoration(
+        color: AppColors.darkBg2,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.darkLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Status timeline',
+            style: AppTextStyles.tableHeader.copyWith(
+              color: AppColors.darkFg3,
+              letterSpacing: 0.05,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 68,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _steps.length,
+              separatorBuilder: (_, i) => Center(
+                child: Container(
+                  width: 16,
+                  height: 1.5,
+                  color: i < cur ? AppColors.good : AppColors.darkLine,
+                ),
+              ),
+              itemBuilder: (_, i) {
+                final done = i < cur;
+                final active = i == cur;
+                final ts = _ts(i);
+                final color = active
+                    ? AppColors.accent
+                    : done
+                    ? AppColors.good
+                    : AppColors.darkFg3;
+                return SizedBox(
+                  width: 60,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_steps[i].$3, color: color, size: 17),
+                      const SizedBox(height: 3),
+                      Text(
+                        _steps[i].$2,
+                        style: AppTextStyles.caption.copyWith(color: color),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (ts != null)
+                        Text(
+                          _fmtTs(ts),
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.darkFg3,
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  final String name;
+  const _Avatar({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = name
+        .trim()
+        .split(' ')
+        .take(2)
+        .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+        .join();
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: AppColors.accent.withAlpha(30),
+        borderRadius: BorderRadius.circular(AppRadii.sm),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: AppTextStyles.label.copyWith(
+            color: AppColors.accent,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }

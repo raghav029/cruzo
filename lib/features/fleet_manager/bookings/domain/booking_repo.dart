@@ -23,4 +23,17 @@ abstract class BookingRepo {
   Future<ApiResult<Booking>> autoAssign(String id);
 
   Future<ApiResult<Booking>> cancel(String id, {String? reason});
+
+  Future<ApiResult<Booking>> getById(String id);
+  Future<ApiResult<List<Booking>>> myActive();
+  Future<ApiResult<Booking>> refreshBoardingOtp(String id);
+
+  Future<ApiResult<Booking>> create({
+    required String corporateClientId,
+    required String pickupAddress,
+    required String dropAddress,
+    required String vehicleType,
+    required String scheduledAt,
+    String? notes,
+  });
 }

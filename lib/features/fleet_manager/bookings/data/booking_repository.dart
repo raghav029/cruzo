@@ -87,4 +87,56 @@ class BookingRepoImpl implements BookingRepo {
       return Booking.fromJson(resp.data['data'] as Map<String, dynamic>);
     }, url: BookingEndpoints.cancel(id));
   }
+
+  @override
+  Future<ApiResult<List<Booking>>> myActive() async {
+    return executeRetrofitCall<List<Booking>>(() async {
+      final resp = await _dio.get(BookingEndpoints.myActive);
+      final items = (resp.data['data'] as List)
+          .map((e) => Booking.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return items;
+    }, url: BookingEndpoints.myActive);
+  }
+
+  @override
+  Future<ApiResult<Booking>> refreshBoardingOtp(String id) async {
+    return executeRetrofitCall<Booking>(() async {
+      final resp = await _dio.post(BookingEndpoints.refreshBoardingOtp(id));
+      return Booking.fromJson(resp.data['data'] as Map<String, dynamic>);
+    }, url: BookingEndpoints.refreshBoardingOtp(id));
+  }
+
+  @override
+  Future<ApiResult<Booking>> getById(String id) async {
+    return executeRetrofitCall<Booking>(() async {
+      final resp = await _dio.get(BookingEndpoints.byId(id));
+      return Booking.fromJson(resp.data['data'] as Map<String, dynamic>);
+    }, url: BookingEndpoints.byId(id));
+  }
+
+  @override
+  Future<ApiResult<Booking>> create({
+    required String corporateClientId,
+    required String pickupAddress,
+    required String dropAddress,
+    required String vehicleType,
+    required String scheduledAt,
+    String? notes,
+  }) async {
+    return executeRetrofitCall<Booking>(() async {
+      final resp = await _dio.post(
+        BookingEndpoints.base,
+        data: {
+          'corporateClientId': corporateClientId,
+          'pickupAddress': pickupAddress,
+          'dropAddress': dropAddress,
+          'vehicleTypeRequested': vehicleType,
+          'scheduledAt': scheduledAt,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+      );
+      return Booking.fromJson(resp.data['data'] as Map<String, dynamic>);
+    }, url: BookingEndpoints.base);
+  }
 }

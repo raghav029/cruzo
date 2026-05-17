@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../env.dart';
 import '../auth/token_storage.dart';
+import '../auth/bloc/auth_bloc.dart';
+import '../auth/bloc/auth_event.dart';
+import '../di/injection.dart';
 
 class DioClient {
   DioClient._();
@@ -17,7 +20,7 @@ class DioClient {
     );
 
     dio.interceptors.addAll([
-      _AuthInterceptor(tokenStorage, dio),
+      _AuthInterceptor(tokenStorage),
       PrettyDioLogger(requestBody: true, responseBody: false),
     ]);
 
@@ -27,9 +30,8 @@ class DioClient {
 
 class _AuthInterceptor extends Interceptor {
   final TokenStorage _storage;
-  final Dio _dio;
 
-  _AuthInterceptor(this._storage, this._dio);
+  _AuthInterceptor(this._storage);
 
   @override
   Future<void> onRequest(
@@ -45,8 +47,11 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.response?.statusCode == 401) {
-      _storage.clearToken();
+    final statusCode = err.response?.statusCode;
+    if (statusCode == 401) {
+      if (getIt.isRegistered<AuthBloc>()) {
+        getIt<AuthBloc>().add(const AuthLogoutRequested());
+      }
     }
     handler.next(err);
   }

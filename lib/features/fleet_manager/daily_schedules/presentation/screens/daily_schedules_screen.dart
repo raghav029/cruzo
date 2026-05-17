@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/dls/dls.dart';
 import '../../../../../core/di/injection.dart';
 import '../../../../../core/network/result.dart';
+import '../../../bookings/domain/booking_status.dart';
 import '../../../drivers/domain/driver.dart';
 import '../../../drivers/domain/driver_repo.dart';
 import '../../../vehicles/domain/vehicle.dart';
@@ -49,8 +50,9 @@ class _DailySchedulesScreenState extends State<DailySchedulesScreen>
     return '$y-$mo-$day';
   }
 
-  void _loadTrips() =>
-      context.read<DailyScheduleBloc>().add(TripsRequested(_dateFmt(_tripDate)));
+  void _loadTrips() => context.read<DailyScheduleBloc>().add(
+    TripsRequested(_dateFmt(_tripDate)),
+  );
 
   void _prevDay() {
     setState(() => _tripDate = _tripDate.subtract(const Duration(days: 1)));
@@ -67,7 +69,7 @@ class _DailySchedulesScreenState extends State<DailySchedulesScreen>
     return Scaffold(
       backgroundColor: AppColors.darkBg1,
       body: NestedScrollView(
-        headerSliverBuilder: (_, __) => [
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -179,9 +181,9 @@ class _SchedulesTab extends StatelessWidget {
     if (state is DailyScheduleError) {
       return _ErrorView(
         message: (state as DailyScheduleError).message,
-        onRetry: () => context
-            .read<DailyScheduleBloc>()
-            .add(const ScheduleListRequested()),
+        onRetry: () => context.read<DailyScheduleBloc>().add(
+          const ScheduleListRequested(),
+        ),
       );
     }
     if (state is ScheduleListLoaded) {
@@ -196,12 +198,10 @@ class _SchedulesTab extends StatelessWidget {
       return ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.pagePadH),
         itemCount: schedules.length,
-        separatorBuilder: (_, __) =>
-            const SizedBox(height: AppSpacing.sm),
+        separatorBuilder: (context, _) => const SizedBox(height: AppSpacing.sm),
         itemBuilder: (_, i) => _ScheduleCard(
           schedule: schedules[i],
-          onManageSequence: () =>
-              _showPassengerSheet(context, schedules[i]),
+          onManageSequence: () => _showPassengerSheet(context, schedules[i]),
         ),
       );
     }
@@ -230,8 +230,7 @@ class _SchedulesTab extends StatelessWidget {
 class _ScheduleCard extends StatelessWidget {
   final DailySchedule schedule;
   final VoidCallback onManageSequence;
-  const _ScheduleCard(
-      {required this.schedule, required this.onManageSequence});
+  const _ScheduleCard({required this.schedule, required this.onManageSequence});
 
   @override
   Widget build(BuildContext context) {
@@ -305,12 +304,16 @@ class _ScheduleCard extends StatelessWidget {
                   children: [
                     Text(
                       'Manage stops',
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.accent),
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.accent,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.p4),
-                    const Icon(Icons.chevron_right,
-                        size: 14, color: AppColors.accent),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 14,
+                      color: AppColors.accent,
+                    ),
                   ],
                 ),
               ],
@@ -344,20 +347,29 @@ class _TypeBadge extends StatelessWidget {
   final String label;
   final Color color;
   final Color bg;
-  const _TypeBadge(
-      {required this.label, required this.color, required this.bg});
+  const _TypeBadge({
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.p6, vertical: AppSpacing.p2),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadii.pill)),
+        horizontal: AppSpacing.p6,
+        vertical: AppSpacing.p2,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
       child: Text(
         label,
-        style: AppTextStyles.caption
-            .copyWith(color: color, fontWeight: FontWeight.w600),
+        style: AppTextStyles.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -374,8 +386,7 @@ class _PassengerSequenceSheet extends StatefulWidget {
       _PassengerSequenceSheetState();
 }
 
-class _PassengerSequenceSheetState
-    extends State<_PassengerSequenceSheet> {
+class _PassengerSequenceSheetState extends State<_PassengerSequenceSheet> {
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height * 0.85;
@@ -394,7 +405,9 @@ class _PassengerSequenceSheetState
           ),
           const SizedBox(height: AppSpacing.md),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadH),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.pagePadH,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -433,18 +446,23 @@ class _PassengerSequenceSheetState
                       sub: 'Corporate admin needs to enroll employees first.',
                     );
                   }
-                  final sorted = [...state.passengers]
-                    ..sort((a, b) {
-                      if (a.stopSequence == null && b.stopSequence == null)
-                        return 0;
-                      if (a.stopSequence == null) return 1;
-                      if (b.stopSequence == null) return -1;
-                      return a.stopSequence!.compareTo(b.stopSequence!);
-                    });
+                  final sorted = [...state.passengers];
+                  sorted.sort((a, b) {
+                    if (a.stopSequence == null && b.stopSequence == null) {
+                      return 0;
+                    }
+                    if (a.stopSequence == null) {
+                      return 1;
+                    }
+                    if (b.stopSequence == null) {
+                      return -1;
+                    }
+                    return a.stopSequence!.compareTo(b.stopSequence!);
+                  });
                   return ListView.separated(
                     padding: const EdgeInsets.all(AppSpacing.pagePadH),
                     itemCount: sorted.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (context, _) =>
                         const SizedBox(height: AppSpacing.sm),
                     itemBuilder: (_, i) => _PassengerRow(
                       passenger: sorted[i],
@@ -465,8 +483,7 @@ class _PassengerSequenceSheetState
 class _PassengerRow extends StatefulWidget {
   final DailySchedulePassenger passenger;
   final String scheduleId;
-  const _PassengerRow(
-      {required this.passenger, required this.scheduleId});
+  const _PassengerRow({required this.passenger, required this.scheduleId});
 
   @override
   State<_PassengerRow> createState() => _PassengerRowState();
@@ -480,7 +497,8 @@ class _PassengerRowState extends State<_PassengerRow> {
   void initState() {
     super.initState();
     _ctrl = TextEditingController(
-        text: widget.passenger.stopSequence?.toString() ?? '');
+      text: widget.passenger.stopSequence?.toString() ?? '',
+    );
   }
 
   @override
@@ -492,11 +510,13 @@ class _PassengerRowState extends State<_PassengerRow> {
   void _save() {
     final v = int.tryParse(_ctrl.text.trim());
     if (v == null || v < 1) return;
-    context.read<DailyScheduleBloc>().add(StopSequenceAssigned(
-          scheduleId: widget.scheduleId,
-          passengerId: widget.passenger.id,
-          sequence: v,
-        ));
+    context.read<DailyScheduleBloc>().add(
+      StopSequenceAssigned(
+        scheduleId: widget.scheduleId,
+        passengerId: widget.passenger.id,
+        sequence: v,
+      ),
+    );
     setState(() => _editing = false);
   }
 
@@ -563,16 +583,16 @@ class _PassengerRowState extends State<_PassengerRow> {
                   filled: true,
                   fillColor: AppColors.darkBg2,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm, vertical: AppSpacing.p7),
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.p7,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadii.sm),
-                    borderSide:
-                        const BorderSide(color: AppColors.accent),
+                    borderSide: const BorderSide(color: AppColors.accent),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadii.sm),
-                    borderSide:
-                        const BorderSide(color: AppColors.accent),
+                    borderSide: const BorderSide(color: AppColors.accent),
                   ),
                 ),
                 onSubmitted: (_) => _save(),
@@ -586,7 +606,9 @@ class _PassengerRowState extends State<_PassengerRow> {
               }),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.p10, vertical: AppSpacing.p7),
+                  horizontal: AppSpacing.p10,
+                  vertical: AppSpacing.p7,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.darkBg2,
                   borderRadius: BorderRadius.circular(AppRadii.sm),
@@ -595,8 +617,7 @@ class _PassengerRowState extends State<_PassengerRow> {
                 child: Text(
                   seq != null ? 'Stop $seq' : 'Set',
                   style: AppTextStyles.label.copyWith(
-                    color:
-                        seq != null ? AppColors.darkFg1 : AppColors.accent,
+                    color: seq != null ? AppColors.darkFg1 : AppColors.accent,
                   ),
                 ),
               ),
@@ -611,7 +632,11 @@ class _PassengerRowState extends State<_PassengerRow> {
                   color: AppColors.accentBg,
                   borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
-                child: const Icon(Icons.check, size: 16, color: AppColors.accent),
+                child: const Icon(
+                  Icons.check,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
               ),
             ),
           ],
@@ -645,8 +670,18 @@ class _TripsTab extends StatelessWidget {
   String get _label {
     if (_isToday) return 'Today';
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -658,13 +693,18 @@ class _TripsTab extends StatelessWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.pagePadH, AppSpacing.md,
-                AppSpacing.pagePadH, AppSpacing.sm),
+              AppSpacing.pagePadH,
+              AppSpacing.md,
+              AppSpacing.pagePadH,
+              AppSpacing.sm,
+            ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left,
-                      color: AppColors.darkFg2),
+                  icon: const Icon(
+                    Icons.chevron_left,
+                    color: AppColors.darkFg2,
+                  ),
                   onPressed: onPrev,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -672,24 +712,24 @@ class _TripsTab extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.p12, vertical: AppSpacing.p6),
+                    horizontal: AppSpacing.p12,
+                    vertical: AppSpacing.p6,
+                  ),
                   decoration: BoxDecoration(
                     color: _isToday ? AppColors.accentBg : AppColors.darkBg3,
                     borderRadius: BorderRadius.circular(AppRadii.pill),
                     border: Border.all(
-                      color: _isToday
-                          ? AppColors.accent
-                          : AppColors.darkLine,
+                      color: _isToday ? AppColors.accent : AppColors.darkLine,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 13,
-                          color: _isToday
-                              ? AppColors.accent
-                              : AppColors.darkFg2),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 13,
+                        color: _isToday ? AppColors.accent : AppColors.darkFg2,
+                      ),
                       const SizedBox(width: AppSpacing.p6),
                       Text(
                         _label,
@@ -704,8 +744,10 @@ class _TripsTab extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right,
-                      color: AppColors.darkFg2),
+                  icon: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.darkFg2,
+                  ),
                   onPressed: onNext,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -714,8 +756,7 @@ class _TripsTab extends StatelessWidget {
             ),
           ),
         ),
-        if (state is DailyScheduleLoading ||
-            state is DailyScheduleMutating)
+        if (state is DailyScheduleLoading || state is DailyScheduleMutating)
           const SliverFillRemaining(
             child: Center(child: CircularProgressIndicator()),
           )
@@ -733,7 +774,8 @@ class _TripsTab extends StatelessWidget {
         child: _EmptyView(
           icon: Icons.directions_car_outlined,
           message: 'No trips on this day',
-          sub: 'Scheduled trips will appear here once created by the midnight scheduler.',
+          sub:
+              'Scheduled trips will appear here once created by the midnight scheduler.',
         ),
       );
     }
@@ -742,8 +784,12 @@ class _TripsTab extends StatelessWidget {
     final assigned = trips.where((t) => !t.needsDriver).toList();
 
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadH, 0,
-          AppSpacing.pagePadH, AppSpacing.xl),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pagePadH,
+        0,
+        AppSpacing.pagePadH,
+        AppSpacing.xl,
+      ),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
           if (unassigned.isNotEmpty) ...[
@@ -753,22 +799,27 @@ class _TripsTab extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                      color: AppColors.warn, shape: BoxShape.circle),
+                    color: AppColors.warn,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Needs driver (${unassigned.length})',
                   style: AppTextStyles.bodySm.copyWith(
-                      color: AppColors.warn, fontWeight: FontWeight.w700),
+                    color: AppColors.warn,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            ...unassigned.map((t) => Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: _TripCard(trip: t),
-                )),
+            ...unassigned.map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: _TripCard(trip: t),
+              ),
+            ),
             const SizedBox(height: AppSpacing.md),
           ],
           if (assigned.isNotEmpty) ...[
@@ -778,22 +829,27 @@ class _TripsTab extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                      color: AppColors.good, shape: BoxShape.circle),
+                    color: AppColors.good,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Assigned (${assigned.length})',
                   style: AppTextStyles.bodySm.copyWith(
-                      color: AppColors.good, fontWeight: FontWeight.w700),
+                    color: AppColors.good,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            ...assigned.map((t) => Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: _TripCard(trip: t),
-                )),
+            ...assigned.map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: _TripCard(trip: t),
+              ),
+            ),
           ],
         ]),
       ),
@@ -835,8 +891,9 @@ class _TripCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.p2),
                     Text(
                       trip.scheduledPickupTime,
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.darkFg2),
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.darkFg2,
+                      ),
                     ),
                   ],
                 ),
@@ -846,41 +903,42 @@ class _TripCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.p10),
           // passengers
-          ...trip.passengers.take(3).map((p) => Padding(
-                padding:
-                    const EdgeInsets.only(bottom: AppSpacing.p4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.darkBg3,
-                        borderRadius:
-                            BorderRadius.circular(AppRadii.pill),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        p.stopSequence != null
-                            ? '${p.stopSequence}'
-                            : '?',
-                        style: AppTextStyles.caption.copyWith(
+          ...trip.passengers
+              .take(3)
+              .map(
+                (p) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.p4),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: AppColors.darkBg3,
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          p.stopSequence != null ? '${p.stopSequence}' : '?',
+                          style: AppTextStyles.caption.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.darkFg2),
+                            color: AppColors.darkFg2,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        p.employeeName,
-                        style: AppTextStyles.bodySm,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          p.employeeName,
+                          style: AppTextStyles.bodySm,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    _PassengerStatusDot(status: p.status),
-                  ],
+                      _PassengerStatusDot(status: p.status),
+                    ],
+                  ),
                 ),
-              )),
+              ),
           if (trip.passengers.length > 3)
             Text(
               '+${trip.passengers.length - 3} more',
@@ -892,20 +950,32 @@ class _TripCard extends StatelessWidget {
           if (trip.driverName != null)
             Row(
               children: [
-                const Icon(Icons.person_outline,
-                    size: 14, color: AppColors.darkFg3),
+                const Icon(
+                  Icons.person_outline,
+                  size: 14,
+                  color: AppColors.darkFg3,
+                ),
                 const SizedBox(width: AppSpacing.p4),
-                Text(trip.driverName!,
-                    style: AppTextStyles.caption
-                        .copyWith(color: AppColors.darkFg1)),
+                Text(
+                  trip.driverName!,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.darkFg1,
+                  ),
+                ),
                 if (trip.vehiclePlate != null) ...[
                   const SizedBox(width: AppSpacing.p12),
-                  const Icon(Icons.directions_car_outlined,
-                      size: 14, color: AppColors.darkFg3),
+                  const Icon(
+                    Icons.directions_car_outlined,
+                    size: 14,
+                    color: AppColors.darkFg3,
+                  ),
                   const SizedBox(width: AppSpacing.p4),
-                  Text(trip.vehiclePlate!,
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.darkFg1)),
+                  Text(
+                    trip.vehiclePlate!,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.darkFg1,
+                    ),
+                  ),
                 ],
               ],
             )
@@ -915,13 +985,17 @@ class _TripCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.add_circle_outline,
-                      size: 15, color: AppColors.accent),
+                  const Icon(
+                    Icons.add_circle_outline,
+                    size: 15,
+                    color: AppColors.accent,
+                  ),
                   const SizedBox(width: AppSpacing.p4),
                   Text(
                     'Assign driver',
-                    style: AppTextStyles.label
-                        .copyWith(color: AppColors.accent),
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.accent,
+                    ),
                   ),
                 ],
               ),
@@ -948,29 +1022,57 @@ class _TripCard extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  final String status;
+  final BookingStatus status;
   const _StatusChip({required this.status});
 
   @override
   Widget build(BuildContext context) {
     final (label, color, bg) = switch (status) {
-      'SCHEDULED' => ('Scheduled', AppColors.warn, AppColors.warnBg),
-      'DRIVER_ASSIGNED' => ('Assigned', AppColors.info, AppColors.infoBg),
-      'IN_PROGRESS' => ('In Progress', AppColors.good, AppColors.goodBg),
-      'COMPLETED' => ('Completed', AppColors.darkFg2, AppColors.darkBg3),
-      'CANCELLED' => ('Cancelled', AppColors.bad, AppColors.badBg),
-      _ => (status, AppColors.darkFg2, AppColors.darkBg3),
+      BookingStatus.scheduled => (
+        'Scheduled',
+        AppColors.warn,
+        AppColors.warnBg,
+      ),
+      BookingStatus.driverAssigned => (
+        'Assigned',
+        AppColors.info,
+        AppColors.infoBg,
+      ),
+      BookingStatus.inProgress => (
+        'In Progress',
+        AppColors.good,
+        AppColors.goodBg,
+      ),
+      BookingStatus.completed => (
+        'Completed',
+        AppColors.darkFg2,
+        AppColors.darkBg3,
+      ),
+      BookingStatus.cancelledByEmployee ||
+      BookingStatus.cancelledByAdmin ||
+      BookingStatus.cancelledByFleetManager ||
+      BookingStatus.cancelledByDriver => (
+        'Cancelled',
+        AppColors.bad,
+        AppColors.badBg,
+      ),
+      _ => (status.displayName, AppColors.darkFg2, AppColors.darkBg3),
     };
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.p6, vertical: AppSpacing.p2),
+        horizontal: AppSpacing.p6,
+        vertical: AppSpacing.p2,
+      ),
       decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadii.pill)),
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
       child: Text(
         label,
-        style: AppTextStyles.caption
-            .copyWith(color: color, fontWeight: FontWeight.w600),
+        style: AppTextStyles.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -1043,11 +1145,13 @@ class _AssignDriverSheetState extends State<_AssignDriverSheet> {
 
   void _assign() {
     if (_selectedDriver == null || _selectedVehicle == null) return;
-    context.read<DailyScheduleBloc>().add(DriverAssigned(
-          tripId: widget.trip.id,
-          driverId: _selectedDriver!,
-          vehicleId: _selectedVehicle!,
-        ));
+    context.read<DailyScheduleBloc>().add(
+      DriverAssigned(
+        tripId: widget.trip.id,
+        driverId: _selectedDriver!,
+        vehicleId: _selectedVehicle!,
+      ),
+    );
     Navigator.pop(context);
   }
 
@@ -1055,7 +1159,8 @@ class _AssignDriverSheetState extends State<_AssignDriverSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.pagePadH),
         child: Column(
@@ -1076,10 +1181,7 @@ class _AssignDriverSheetState extends State<_AssignDriverSheet> {
             const SizedBox(height: AppSpacing.md),
             Text('Assign Driver', style: AppTextStyles.h3),
             const SizedBox(height: AppSpacing.p4),
-            Text(
-              widget.trip.scheduleName,
-              style: AppTextStyles.bodySm,
-            ),
+            Text(widget.trip.scheduleName, style: AppTextStyles.bodySm),
             const SizedBox(height: AppSpacing.md),
             if (_loading)
               const Center(child: CircularProgressIndicator())
@@ -1090,10 +1192,12 @@ class _AssignDriverSheetState extends State<_AssignDriverSheet> {
                 hint: 'Select available driver',
                 value: _selectedDriver,
                 items: _drivers
-                    .map((d) => DropdownMenuItem(
-                          value: d.id,
-                          child: Text(d.fullName, style: AppTextStyles.body),
-                        ))
+                    .map(
+                      (d) => DropdownMenuItem(
+                        value: d.id,
+                        child: Text(d.fullName, style: AppTextStyles.body),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedDriver = v),
               ),
@@ -1104,12 +1208,15 @@ class _AssignDriverSheetState extends State<_AssignDriverSheet> {
                 hint: 'Select vehicle',
                 value: _selectedVehicle,
                 items: _vehicles
-                    .map((v) => DropdownMenuItem(
-                          value: v.id,
-                          child: Text(
-                              '${v.plateNumber} · ${v.vehicleType}',
-                              style: AppTextStyles.body),
-                        ))
+                    .map(
+                      (v) => DropdownMenuItem(
+                        value: v.id,
+                        child: Text(
+                          '${v.plateNumber} · ${v.vehicleType}',
+                          style: AppTextStyles.body,
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedVehicle = v),
               ),
@@ -1117,21 +1224,21 @@ class _AssignDriverSheetState extends State<_AssignDriverSheet> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: (_selectedDriver != null &&
-                          _selectedVehicle != null)
+                  onPressed:
+                      (_selectedDriver != null && _selectedVehicle != null)
                       ? _assign
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     foregroundColor: AppColors.accentFg,
                     padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.p12),
+                      vertical: AppSpacing.p12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadii.sm),
                     ),
                   ),
-                  child:
-                      const Text('Assign Driver', style: AppTextStyles.h4),
+                  child: const Text('Assign Driver', style: AppTextStyles.h4),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -1159,7 +1266,9 @@ class _DropdownField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.p12, vertical: AppSpacing.p2),
+        horizontal: AppSpacing.p12,
+        vertical: AppSpacing.p2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.darkBg3,
         borderRadius: BorderRadius.circular(AppRadii.sm),
@@ -1168,8 +1277,10 @@ class _DropdownField extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint,
-              style: AppTextStyles.body.copyWith(color: AppColors.darkFg3)),
+          hint: Text(
+            hint,
+            style: AppTextStyles.body.copyWith(color: AppColors.darkFg3),
+          ),
           isExpanded: true,
           dropdownColor: AppColors.darkBg3,
           icon: const Icon(Icons.expand_more, color: AppColors.darkFg2),
@@ -1187,8 +1298,11 @@ class _EmptyView extends StatelessWidget {
   final IconData icon;
   final String message;
   final String sub;
-  const _EmptyView(
-      {required this.icon, required this.message, required this.sub});
+  const _EmptyView({
+    required this.icon,
+    required this.message,
+    required this.sub,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1202,11 +1316,7 @@ class _EmptyView extends StatelessWidget {
             const SizedBox(height: AppSpacing.p12),
             Text(message, style: AppTextStyles.h4),
             const SizedBox(height: AppSpacing.p4),
-            Text(
-              sub,
-              style: AppTextStyles.bodySm,
-              textAlign: TextAlign.center,
-            ),
+            Text(sub, style: AppTextStyles.bodySm, textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -1227,8 +1337,7 @@ class _ErrorView extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, size: 40, color: AppColors.bad),
           const SizedBox(height: AppSpacing.p12),
-          Text(message,
-              style: AppTextStyles.body, textAlign: TextAlign.center),
+          Text(message, style: AppTextStyles.body, textAlign: TextAlign.center),
           const SizedBox(height: AppSpacing.md),
           TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],

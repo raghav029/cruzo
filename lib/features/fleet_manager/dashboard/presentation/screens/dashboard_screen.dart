@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/dls/dls.dart';
 import '../../../../../shared/widgets/action_item.dart';
+import '../../../../../shared/widgets/bar_chart_widget.dart';
+import '../../../../../shared/widgets/cruzo_segmented.dart';
 import '../../../../../shared/widgets/fleet_bar.dart';
 import '../../../../../shared/widgets/kpi_card.dart';
 import '../../../../../shared/widgets/section_header.dart';
@@ -84,6 +86,7 @@ class _DashboardContent extends StatelessWidget {
                   color: AppColors.accent,
                   bgColor: AppColors.accentBg,
                   onTap: () => context.go(AppRoutes.fleetDailyTripsPath),
+                  sparkData: summary.tripsSparkData.isEmpty ? null : summary.tripsSparkData,
                 ),
                 KpiCard(
                   label: 'ACTIVE TRIPS',
@@ -92,6 +95,7 @@ class _DashboardContent extends StatelessWidget {
                   icon: Icons.directions_car_rounded,
                   color: AppColors.good,
                   bgColor: AppColors.goodBg,
+                  sparkData: summary.tripsSparkData.isEmpty ? null : summary.tripsSparkData,
                 ),
                 KpiCard(
                   label: 'UNASSIGNED',
@@ -107,6 +111,7 @@ class _DashboardContent extends StatelessWidget {
                       ? AppColors.warnBg
                       : AppColors.goodBg,
                   onTap: () => context.go(AppRoutes.fleetDailyTripsPath),
+                  sparkData: summary.unassignedSparkData.isEmpty ? null : summary.unassignedSparkData,
                 ),
                 KpiCard(
                   label: 'PENDING APPROVALS',
@@ -122,29 +127,28 @@ class _DashboardContent extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // ── Fleet status + Action queue ─────────────────────────────────
+            // ── Trips by hour chart + Fleet status ──────────────────────────
             _isWide(context)
                 ? Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 3,
-                        child: _FleetStatusCard(summary: summary),
-                      ),
+                      Expanded(flex: 7, child: _TripsByHourCard(summary: summary)),
                       const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
-                        child: _ActionQueueCard(summary: summary),
-                      ),
+                      Expanded(flex: 5, child: _FleetStatusCard(summary: summary)),
                     ],
                   )
                 : Column(
                     children: [
-                      _FleetStatusCard(summary: summary),
+                      _TripsByHourCard(summary: summary),
                       const SizedBox(height: 16),
-                      _ActionQueueCard(summary: summary),
+                      _FleetStatusCard(summary: summary),
                     ],
                   ),
+
+            const SizedBox(height: 24),
+
+            // ── Action queue ────────────────────────────────────────────────
+            _ActionQueueCard(summary: summary),
 
             const SizedBox(height: 24),
 
@@ -248,6 +252,54 @@ class _KpiGrid extends StatelessWidget {
     if (w >= 1200) return 4;
     if (w >= 800) return 2;
     return 2;
+  }
+}
+
+// ─── Trips by hour card ───────────────────────────────────────────────────────
+
+class _TripsByHourCard extends StatefulWidget {
+  final DashboardSummary summary;
+  const _TripsByHourCard({required this.summary});
+
+  @override
+  State<_TripsByHourCard> createState() => _TripsByHourCardState();
+}
+
+class _TripsByHourCardState extends State<_TripsByHourCard> {
+  int _seg = 0;
+
+  List<BarChartData> _toBarData(List<TripHourStat> stats) =>
+      stats.map((s) => BarChartData(label: s.label, value: s.value)).toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final datasets = [
+      _toBarData(widget.summary.tripsByHourToday),
+      _toBarData(widget.summary.tripsByHour7d),
+      _toBarData(widget.summary.tripsByHour30d),
+    ];
+    final data = datasets[_seg];
+
+    return _Card(
+      title: 'Trips by hour',
+      subtitle: 'Bookings combined · IST',
+      action: CruzoSegmented(
+        labels: const ['Today', '7d', '30d'],
+        selected: _seg,
+        onChanged: (i) => setState(() => _seg = i),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: data.isEmpty
+            ? const SizedBox(
+                height: 160,
+                child: Center(
+                  child: Text('No data', style: TextStyle(color: AppColors.darkFg3, fontSize: 12)),
+                ),
+              )
+            : BarChartWidget(data: data, height: 160, color: AppColors.accent),
+      ),
+    );
   }
 }
 
@@ -465,8 +517,9 @@ class _Card extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget child;
+  final Widget? action;
 
-  const _Card({required this.title, required this.child, this.subtitle});
+  const _Card({required this.title, required this.child, this.subtitle, this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -507,6 +560,7 @@ class _Card extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (action != null) action!,
               ],
             ),
           ),

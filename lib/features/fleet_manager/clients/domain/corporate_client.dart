@@ -8,6 +8,8 @@ class CorporateClient {
   final double creditLimit;
   final double currentOutstanding;
   final bool active;
+  final double? maxBookingValue;
+  final List<String>? allowedVehicleTypes;
 
   const CorporateClient({
     required this.id,
@@ -19,6 +21,8 @@ class CorporateClient {
     required this.creditLimit,
     required this.currentOutstanding,
     required this.active,
+    this.maxBookingValue,
+    this.allowedVehicleTypes,
   });
 
   factory CorporateClient.fromJson(Map<String, dynamic> json) => CorporateClient(
@@ -31,6 +35,10 @@ class CorporateClient {
         creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0,
         currentOutstanding: (json['currentOutstanding'] as num?)?.toDouble() ?? 0,
         active: json['active'] as bool? ?? true,
+        maxBookingValue: (json['maxBookingValue'] as num?)?.toDouble(),
+        allowedVehicleTypes: json['allowedVehicleTypes'] != null
+            ? (json['allowedVehicleTypes'] as String).split(',').map((e) => e.trim()).toList()
+            : null,
       );
 
   double get availableCredit => creditLimit - currentOutstanding;

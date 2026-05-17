@@ -13,7 +13,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogout);
   }
 
-  Future<void> _onCheck(AuthCheckRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onCheck(
+    AuthCheckRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoading());
     final result = await _repo.restoreSession();
     switch (result) {
@@ -24,7 +27,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onLogin(AuthLoginRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogin(
+    AuthLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoading());
     final result = await _repo.login(event.email, event.password);
     switch (result) {
@@ -35,7 +41,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onLogout(AuthLogoutRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogout(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     await _repo.logout();
     emit(const AuthUnauthenticated());
   }

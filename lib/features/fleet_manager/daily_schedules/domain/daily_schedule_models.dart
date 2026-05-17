@@ -1,3 +1,5 @@
+import '../../bookings/domain/booking_status.dart';
+
 class DailySchedule {
   final String id;
   final String corporateClientId;
@@ -30,23 +32,24 @@ class DailySchedule {
   });
 
   factory DailySchedule.fromJson(Map<String, dynamic> j) => DailySchedule(
-        id: j['id'] as String,
-        corporateClientId: j['corporateClientId'] as String,
-        corporateClientName: j['corporateClientName'] as String? ?? '',
-        name: j['name'] as String,
-        vehicleType: j['vehicleType'] as String,
-        recurrenceDays: (j['recurrenceDays'] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
-            [],
-        pickupTime: j['pickupTime'] as String? ?? '',
-        dropAddress: j['dropAddress'] as String? ?? '',
-        isPooled: j['pooled'] as bool? ?? false,
-        maxCapacity: j['maxCapacity'] as int? ?? 1,
-        isActive: j['active'] as bool? ?? true,
-        enrolledPassengerCount: j['enrolledPassengerCount'] as int? ?? 0,
-        createdAt: j['createdAt'] as String? ?? '',
-      );
+    id: j['id'] as String,
+    corporateClientId: j['corporateClientId'] as String,
+    corporateClientName: j['corporateClientName'] as String? ?? '',
+    name: j['name'] as String,
+    vehicleType: j['vehicleType'] as String,
+    recurrenceDays:
+        (j['recurrenceDays'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
+    pickupTime: j['pickupTime'] as String? ?? '',
+    dropAddress: j['dropAddress'] as String? ?? '',
+    isPooled: j['pooled'] as bool? ?? false,
+    maxCapacity: j['maxCapacity'] as int? ?? 1,
+    isActive: j['active'] as bool? ?? true,
+    enrolledPassengerCount: j['enrolledPassengerCount'] as int? ?? 0,
+    createdAt: j['createdAt'] as String? ?? '',
+  );
 }
 
 class DailySchedulePassenger {
@@ -139,7 +142,7 @@ class DailyTrip {
   final String? driverPhone;
   final String? vehicleId;
   final String? vehiclePlate;
-  final String status;
+  final BookingStatus status;
   final List<DailyTripPassenger> passengers;
   final String createdAt;
 
@@ -161,24 +164,25 @@ class DailyTrip {
   });
 
   factory DailyTrip.fromJson(Map<String, dynamic> j) => DailyTrip(
-        id: j['id'] as String,
-        dailyScheduleId: j['dailyScheduleId'] as String? ?? '',
-        scheduleName: j['scheduleName'] as String? ?? '',
-        tripDate: j['tripDate'] as String? ?? '',
-        scheduledPickupTime: j['scheduledPickupTime'] as String? ?? '',
-        dropAddress: j['dropAddress'] as String? ?? '',
-        driverId: j['driverId'] as String?,
-        driverName: j['driverName'] as String?,
-        driverPhone: j['driverPhone'] as String?,
-        vehicleId: j['vehicleId'] as String?,
-        vehiclePlate: j['vehiclePlate'] as String?,
-        status: j['status'] as String? ?? 'SCHEDULED',
-        passengers: (j['passengers'] as List<dynamic>?)
-                ?.map((e) => DailyTripPassenger.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [],
-        createdAt: j['createdAt'] as String? ?? '',
-      );
+    id: j['id'] as String,
+    dailyScheduleId: j['dailyScheduleId'] as String? ?? '',
+    scheduleName: j['scheduleName'] as String? ?? '',
+    tripDate: j['tripDate'] as String? ?? '',
+    scheduledPickupTime: j['scheduledPickupTime'] as String? ?? '',
+    dropAddress: j['dropAddress'] as String? ?? '',
+    driverId: j['driverId'] as String?,
+    driverName: j['driverName'] as String?,
+    driverPhone: j['driverPhone'] as String?,
+    vehicleId: j['vehicleId'] as String?,
+    vehiclePlate: j['vehiclePlate'] as String?,
+    status: BookingStatus.fromString(j['status'] as String? ?? 'SCHEDULED'),
+    passengers:
+        (j['passengers'] as List<dynamic>?)
+            ?.map((e) => DailyTripPassenger.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [],
+    createdAt: j['createdAt'] as String? ?? '',
+  );
 
-  bool get needsDriver => status == 'SCHEDULED';
+  bool get needsDriver => status == BookingStatus.scheduled;
 }

@@ -1,0 +1,147 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                   BOOKING STATUS ENUM - REFERENCE CARD                        ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+LOCATION
+─────────────────────────────────────────────────────────────────────────────
+lib/features/fleet_manager/bookings/domain/booking_status.dart
+
+IMPORT
+─────────────────────────────────────────────────────────────────────────────
+import 'package:cruzo/features/fleet_manager/bookings/domain/booking_status.dart';
+
+PARSING FROM API
+─────────────────────────────────────────────────────────────────────────────
+BookingStatus status = BookingStatus.fromString(booking.status);
+
+STATUS VALUES & RAW STRINGS
+─────────────────────────────────────────────────────────────────────────────
+┌────────────────────────────┬──────────────────────────────┐
+│ Enum Value                 │ Raw String                   │
+├────────────────────────────┼──────────────────────────────┤
+│ pendingApproval            │ 'PENDING_APPROVAL'           │
+│ approved                   │ 'APPROVED'                   │
+│ driverAssigned             │ 'DRIVER_ASSIGNED'            │
+│ driverEnRoute              │ 'DRIVER_EN_ROUTE'            │
+│ arrived                    │ 'ARRIVED'                    │
+│ inProgress                 │ 'IN_PROGRESS'                │
+│ completed                  │ 'COMPLETED'                  │
+│ cancelledByEmployee        │ 'CANCELLED_BY_EMPLOYEE'      │
+│ cancelledByAdmin           │ 'CANCELLED_BY_ADMIN'         │
+│ cancelledByFleetManager    │ 'CANCELLED_BY_FLEET_MANAGER' │
+│ cancelledByDriver          │ 'CANCELLED_BY_DRIVER'        │
+│ rejected                   │ 'REJECTED'                   │
+│ scheduled                  │ 'SCHEDULED'                  │
+└────────────────────────────┴──────────────────────────────┘
+
+DISPLAY NAMES
+─────────────────────────────────────────────────────────────────────────────
+pendingApproval          → displayName: "Pending"          → shortName: "Pending"
+approved                 → displayName: "Approved"         → shortName: "Approved"
+driverAssigned           → displayName: "Driver Assigned"  → shortName: "Assigned"
+driverEnRoute            → displayName: "En Route"         → shortName: "En Route"
+arrived                  → displayName: "Arrived"          → shortName: "Arrived"
+inProgress               → displayName: "In Progress"      → shortName: "En route"
+completed                → displayName: "Completed"        → shortName: "Done"
+cancelledByEmployee      → displayName: "Cancelled"        → shortName: "Cancelled"
+cancelledByAdmin         → displayName: "Cancelled"        → shortName: "Cancelled"
+cancelledByFleetManager  → displayName: "Cancelled"        → shortName: "Cancelled"
+cancelledByDriver        → displayName: "Cancelled (Driver)" → shortName: "Cancelled"
+rejected                 → displayName: "Rejected"         → shortName: "Rejected"
+scheduled                → displayName: "Scheduled"        → shortName: "Scheduled"
+
+COLORS (DLS Tokens)
+─────────────────────────────────────────────────────────────────────────────
+completed          → color: AppColors.good,          bgColor: AppColors.goodBg
+inProgress         → color: AppColors.accent,        bgColor: AppColors.accentBg
+driverEnRoute      → color: AppColors.accent,        bgColor: AppColors.accentBg
+arrived            → color: AppColors.accent,        bgColor: AppColors.accentBg
+cancelledByEmployee → color: AppColors.bad,          bgColor: AppColors.badBg
+cancelledByAdmin   → color: AppColors.bad,           bgColor: AppColors.badBg
+cancelledByFleetManager → color: AppColors.bad,      bgColor: AppColors.badBg
+cancelledByDriver  → color: AppColors.bad,           bgColor: AppColors.badBg
+rejected           → color: AppColors.bad,           bgColor: AppColors.badBg
+driverAssigned     → color: AppColors.info,          bgColor: AppColors.infoBg
+approved           → color: AppColors.warn,          bgColor: AppColors.warnBg
+others             → color: AppColors.darkFg3,       bgColor: AppColors.darkBg3
+
+LOGICAL HELPERS (Boolean Properties)
+─────────────────────────────────────────────────────────────────────────────
+status.isActive
+  ├─ Returns true if: DRIVER_EN_ROUTE, ARRIVED, IN_PROGRESS, DRIVER_ASSIGNED
+  └─ Use case: Check if trip is ongoing
+
+status.isCompleted
+  ├─ Returns true if: COMPLETED
+  └─ Use case: Show completed status UI
+
+status.isCancelled
+  ├─ Returns true if: Any CANCELLED_BY_* status
+  └─ Use case: Show cancelled state
+
+status.isPending
+  ├─ Returns true if: PENDING_APPROVAL
+  └─ Use case: Check if awaiting approval
+
+status.needsDriver
+  ├─ Returns true if: APPROVED
+  └─ Use case: Show "assign driver" UI
+
+status.isDriverMoving
+  ├─ Returns true if: DRIVER_ASSIGNED, DRIVER_EN_ROUTE, ARRIVED
+  └─ Use case: Show driver location tracking
+
+USAGE EXAMPLES
+─────────────────────────────────────────────────────────────────────────────
+
+1. Get color for status badge:
+   final color = BookingStatus.fromString(booking.status).color;
+
+2. Display status name in UI:
+   Text(BookingStatus.fromString(booking.status).displayName)
+
+3. Check if trip is in progress:
+   if (BookingStatus.fromString(booking.status).isActive) { /* ... */ }
+
+4. Get background color for badge:
+   final bgColor = BookingStatus.fromString(booking.status).backgroundColor;
+
+5. Check if driver needs assignment:
+   if (status.needsDriver) { showAssignDriverDialog(); }
+
+REFACTORING CHECKLIST
+─────────────────────────────────────────────────────────────────────────────
+□ Replace: if (status == 'COMPLETED') → if (status.isCompleted)
+□ Replace: if (status == 'APPROVED') → if (status.needsDriver)
+□ Replace: switch (status) { 'COLOR': ... } → status.color
+□ Replace: 12-case display name switch → status.displayName
+□ Replace: filter with status strings → filter with enum values
+□ Remove: all hardcoded status string constants
+□ Update: model to use BookingStatus instead of String
+□ Test: all screens after refactoring
+
+FILES TO REFACTOR (Priority Order)
+─────────────────────────────────────────────────────────────────────────────
+HIGH PRIORITY (Start here - 28% of occurrences):
+  ✓ lib/features/employee/my_trips/presentation/screens/employee_my_trips_screen.dart
+  ✓ lib/features/employee/home/presentation/screens/employee_home_screen.dart
+
+MEDIUM PRIORITY (15% of occurrences):
+  ✓ lib/features/fleet_manager/daily_trips/presentation/screens/daily_trips_screen.dart
+
+LOWER PRIORITY (57% - can do incrementally):
+  ✓ lib/features/driver/my_trip/presentation/screens/driver_booking_trip_screen.dart
+  ✓ lib/features/fleet_manager/daily_schedules/presentation/screens/daily_schedules_screen.dart
+  ✓ lib/features/driver/trip_history/presentation/screens/driver_trip_history_screen.dart
+  ✓ lib/features/driver/my_trip/domain/driver_daily_trip.dart
+  ✓ lib/features/driver/my_trip/presentation/bloc/driver_trip_bloc.dart
+  ✓ lib/features/employee/daily_schedule/presentation/screens/employee_daily_schedule_screen.dart
+
+DOCUMENTATION REFERENCES
+─────────────────────────────────────────────────────────────────────────────
+ENUM_USAGE_GUIDE.md          ← Quick start guide (5 min read)
+BOOKING_STATUS_SUMMARY.md    ← Feature overview (10 min read)
+BOOKING_STATUS_INVENTORY.md  ← File-by-file breakdown (reference)
+STATUS_ENUM_MIGRATION.md     ← Migration strategy & timeline
+
+═══════════════════════════════════════════════════════════════════════════════

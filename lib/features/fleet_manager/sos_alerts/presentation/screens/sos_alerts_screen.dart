@@ -27,7 +27,9 @@ class _SosAlertsScreenState extends State<SosAlertsScreen> {
 
   void _applyFilter(String? status) {
     setState(() => _filter = status);
-    context.read<SosAlertBloc>().add(SosAlertLoadRequested(statusFilter: status));
+    context.read<SosAlertBloc>().add(
+      SosAlertLoadRequested(statusFilter: status),
+    );
   }
 
   @override
@@ -61,9 +63,9 @@ class _SosAlertsScreenState extends State<SosAlertsScreen> {
         final loading = state is SosAlertLoading;
         final active = alerts.where((a) => a.isActive).length;
 
-        return Scaffold(
-          backgroundColor: AppColors.darkBg1,
-          body: CustomScrollView(
+        return Container(
+          color: AppColors.darkBg1,
+          child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -130,9 +132,8 @@ class _Header extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: () => context
-              .read<SosAlertBloc>()
-              .add(const SosAlertLoadRequested()),
+          onPressed: () =>
+              context.read<SosAlertBloc>().add(const SosAlertLoadRequested()),
           icon: const Icon(Icons.refresh_rounded, color: AppColors.darkFg2),
           tooltip: 'Refresh',
         ),
@@ -154,9 +155,19 @@ class _FilterBar extends StatelessWidget {
       children: [
         _Chip(label: 'All', value: null, active: active, onTap: onFilter),
         const SizedBox(width: 8),
-        _Chip(label: 'Active', value: 'ACTIVE', active: active, onTap: onFilter),
+        _Chip(
+          label: 'Active',
+          value: 'ACTIVE',
+          active: active,
+          onTap: onFilter,
+        ),
         const SizedBox(width: 8),
-        _Chip(label: 'Resolved', value: 'RESOLVED', active: active, onTap: onFilter),
+        _Chip(
+          label: 'Resolved',
+          value: 'RESOLVED',
+          active: active,
+          onTap: onFilter,
+        ),
       ],
     );
   }
@@ -308,7 +319,9 @@ class _AlertRow extends StatelessWidget {
                     StatusTag(
                       label: alert.isActive ? 'Active' : 'Resolved',
                       color: alert.isActive ? AppColors.bad : AppColors.good,
-                      bgColor: alert.isActive ? AppColors.badBg : AppColors.goodBg,
+                      bgColor: alert.isActive
+                          ? AppColors.badBg
+                          : AppColors.goodBg,
                     ),
                   ],
                 ),
@@ -316,8 +329,9 @@ class _AlertRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     alert.message!,
-                    style: AppTextStyles.bodySm
-                        .copyWith(color: AppColors.darkFg2),
+                    style: AppTextStyles.bodySm.copyWith(
+                      color: AppColors.darkFg2,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -326,21 +340,31 @@ class _AlertRow extends StatelessWidget {
                 Row(
                   children: [
                     if (alert.lat != null && alert.lng != null) ...[
-                      const Icon(Icons.location_on_outlined,
-                          size: 12, color: AppColors.darkFg3),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 12,
+                        color: AppColors.darkFg3,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         '${alert.lat!.toStringAsFixed(4)}, ${alert.lng!.toStringAsFixed(4)}',
-                        style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3),
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.darkFg3,
+                        ),
                       ),
                       const SizedBox(width: 12),
                     ],
-                    const Icon(Icons.access_time_rounded,
-                        size: 12, color: AppColors.darkFg3),
+                    const Icon(
+                      Icons.access_time_rounded,
+                      size: 12,
+                      color: AppColors.darkFg3,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       created != null ? fmt.format(created.toLocal()) : '—',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.darkFg3),
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.darkFg3,
+                      ),
                     ),
                   ],
                 ),
@@ -400,8 +424,9 @@ class _AlertRow extends StatelessWidget {
               style: AppTextStyles.body.copyWith(color: AppColors.darkFg0),
               decoration: InputDecoration(
                 hintText: 'Resolution notes (optional)',
-                hintStyle:
-                    AppTextStyles.bodySm.copyWith(color: AppColors.darkFg3),
+                hintStyle: AppTextStyles.bodySm.copyWith(
+                  color: AppColors.darkFg3,
+                ),
                 filled: true,
                 fillColor: AppColors.darkBg3,
                 border: OutlineInputBorder(
@@ -419,10 +444,7 @@ class _AlertRow extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.darkFg2),
-            ),
+            child: Text('Cancel', style: TextStyle(color: AppColors.darkFg2)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -432,13 +454,13 @@ class _AlertRow extends StatelessWidget {
             onPressed: () {
               Navigator.pop(ctx);
               context.read<SosAlertBloc>().add(
-                    SosAlertResolveRequested(
-                      alert.id,
-                      notes: notesCtrl.text.trim().isEmpty
-                          ? null
-                          : notesCtrl.text.trim(),
-                    ),
-                  );
+                SosAlertResolveRequested(
+                  alert.id,
+                  notes: notesCtrl.text.trim().isEmpty
+                      ? null
+                      : notesCtrl.text.trim(),
+                ),
+              );
             },
             child: const Text('Confirm Resolve'),
           ),
