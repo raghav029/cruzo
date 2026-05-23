@@ -38,6 +38,7 @@ import 'package:cruzo/features/fleet_manager/daily_schedules/presentation/bloc/d
 import '../theme/theme_service.dart';
 import '../maps/map_service.dart';
 import '../maps/google/google_map_service.dart';
+import 'package:cruzo/features/fleet_manager/live_map/data/live_map_repository.dart';
 import 'package:cruzo/features/employee/daily_schedule/data/employee_schedule_repository.dart';
 import 'package:cruzo/features/employee/daily_schedule/domain/employee_schedule_repo.dart';
 import 'package:cruzo/features/employee/daily_schedule/presentation/bloc/employee_schedule_bloc.dart';
@@ -61,12 +62,20 @@ import 'package:cruzo/features/employee/profile/presentation/view_models/employe
 import 'package:cruzo/features/employee/book_ride/data/services/book_ride_init_service.dart';
 import 'package:cruzo/features/employee/book_ride/data/repositories/book_ride_init_repository.dart';
 import 'package:cruzo/features/employee/book_ride/presentation/view_models/book_ride_init_view_model.dart';
+import 'package:cruzo/features/employee/roster/presentation/view_models/employee_roster_view_model.dart';
 import 'package:cruzo/features/fleet_manager/daily_trips/presentation/view_models/daily_trips_view_model.dart';
 import 'package:cruzo/features/fleet_manager/bookings/presentation/view_models/booking_detail_view_model.dart';
 import 'package:cruzo/features/fleet_manager/bookings/presentation/view_models/assign_driver_view_model.dart';
 import 'package:cruzo/features/corporate_admin/employees/data/services/corp_admin_employee_service.dart';
 import 'package:cruzo/features/corporate_admin/employees/data/repositories/corp_admin_employee_repository.dart';
 import 'package:cruzo/features/corporate_admin/employees/presentation/view_models/corp_employees_view_model.dart';
+import 'package:cruzo/features/corporate_admin/bookings/pending_count_notifier.dart';
+import 'package:cruzo/features/corporate_admin/profile/data/services/corp_admin_profile_service.dart';
+import 'package:cruzo/features/corporate_admin/profile/data/repositories/corp_admin_profile_repository.dart';
+import 'package:cruzo/features/corporate_admin/profile/presentation/view_models/corp_admin_profile_view_model.dart';
+import 'package:cruzo/features/corporate_admin/schedules/data/corp_admin_schedule_service.dart';
+import 'package:cruzo/features/corporate_admin/schedules/data/corp_admin_schedule_repository.dart';
+import 'package:cruzo/features/corporate_admin/schedules/presentation/corp_admin_schedules_view_model.dart';
 
 final getIt = GetIt.instance;
 
@@ -82,6 +91,10 @@ void setupDI() {
 
   // Maps
   getIt.registerLazySingleton<MapService>(() => GoogleMapService());
+  getIt.registerLazySingleton<GoogleMapService>(() => GoogleMapService());
+
+  // Fleet Manager — Live Map
+  getIt.registerLazySingleton<LiveMapRepository>(() => LiveMapRepository(getIt<Dio>()));
 
   // Auth
   getIt.registerLazySingleton<AuthRepository>(
@@ -141,6 +154,9 @@ void setupDI() {
     () => EmployeeScheduleBloc(getIt()),
   );
 
+  // Employee — Roster
+  getIt.registerFactory(() => EmployeeRosterViewModel(repo: getIt<EmployeeScheduleRepo>()));
+
   // Employee — Book Ride (reuses BookingRepo)
   getIt.registerFactory<BookRideBloc>(() => BookRideBloc(getIt()));
 
@@ -191,6 +207,19 @@ void setupDI() {
   getIt.registerLazySingleton(() => CorpAdminEmployeeService(dio: getIt()));
   getIt.registerLazySingleton(() => CorpAdminEmployeeRepository(service: getIt()));
   getIt.registerFactory(() => CorpEmployeesViewModel(repository: getIt()));
+
+  // Corporate Admin — Profile
+  getIt.registerLazySingleton(() => CorpAdminProfileService(dio: getIt()));
+  getIt.registerLazySingleton(() => CorpAdminProfileRepository(service: getIt()));
+  getIt.registerFactory(() => CorpAdminProfileViewModel(repository: getIt()));
+
+  // Corporate Admin — Schedules
+  getIt.registerLazySingleton(() => CorpAdminScheduleService(dio: getIt()));
+  getIt.registerLazySingleton(() => CorpAdminScheduleRepository(service: getIt()));
+  getIt.registerFactory(() => CorpAdminSchedulesViewModel(repository: getIt()));
+
+  // Corporate Admin — Pending Bookings Badge
+  getIt.registerLazySingleton(() => PendingBookingsCountNotifier(bookingRepo: getIt()));
 
   // Theme service
   getIt.registerLazySingleton(() => ThemeService());

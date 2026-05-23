@@ -26,6 +26,8 @@ abstract final class AppRoutes {
   static const fleetDocumentsPath = '/fleet/documents';
   static const fleetReports = 'fleet-reports';
   static const fleetReportsPath = '/fleet/reports';
+  static const fleetLiveMap = 'fleet-live-map';
+  static const fleetLiveMapPath = '/fleet/live-map';
 
   // Employee
   static const employeeHome = 'employee-home';
@@ -46,6 +48,10 @@ abstract final class AppRoutes {
   static const corpAdminReportsPath = '/corp/reports';
   static const corpAdminEmployees = 'corp-admin-employees';
   static const corpAdminEmployeesPath = '/corp/employees';
+  static const corpAdminProfile = 'corp-admin-profile';
+  static const corpAdminProfilePath = '/corp/profile';
+  static const corpAdminSchedules = 'corp-admin-schedules';
+  static const corpAdminSchedulesPath = '/corp/schedules';
 
   // Driver
   static const driverMyTrip = 'driver-my-trip';

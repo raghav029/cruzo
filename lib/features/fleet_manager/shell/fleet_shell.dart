@@ -382,6 +382,14 @@ const _kNav = [
         alert: false,
       ),
       (
+        id: 'livemap',
+        label: 'Live map',
+        icon: Icons.map_rounded,
+        route: AppRoutes.fleetLiveMapPath,
+        badge: 0,
+        alert: false,
+      ),
+      (
         id: 'dailytrips',
         label: 'Daily trips',
         icon: Icons.route_rounded,

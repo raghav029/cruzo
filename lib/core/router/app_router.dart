@@ -6,6 +6,7 @@ import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_state.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/fleet_manager/shell/fleet_shell.dart';
+import '../../features/fleet_manager/live_map/presentation/screens/live_map_screen.dart';
 import '../../features/fleet_manager/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/fleet_manager/vehicles/presentation/screens/vehicles_screen.dart';
 import '../../features/fleet_manager/vehicles/presentation/bloc/vehicle_bloc.dart';
@@ -17,6 +18,9 @@ import '../../features/fleet_manager/bookings/presentation/screens/bookings_scre
 import '../../features/fleet_manager/bookings/presentation/bloc/booking_bloc.dart';
 import '../../features/fleet_manager/invoices/presentation/screens/invoices_screen.dart';
 import '../../features/fleet_manager/invoices/presentation/bloc/invoice_bloc.dart';
+import '../../features/corporate_admin/invoices/presentation/screens/corp_admin_invoices_screen.dart';
+import '../../features/corporate_admin/bookings/presentation/screens/corp_admin_bookings_screen.dart';
+import '../../features/corporate_admin/reports/presentation/screens/corp_admin_reports_screen.dart';
 import '../../features/fleet_manager/daily_trips/presentation/screens/daily_trips_screen.dart';
 import '../../features/fleet_manager/sos_alerts/presentation/screens/sos_alerts_screen.dart';
 import '../../features/fleet_manager/sos_alerts/presentation/bloc/sos_alert_bloc.dart';
@@ -34,6 +38,8 @@ import '../../features/employee/book_ride/presentation/screens/employee_book_rid
 import '../../features/employee/my_trips/presentation/screens/employee_my_trips_screen.dart';
 import '../../features/employee/daily_schedule/presentation/bloc/employee_schedule_bloc.dart';
 import '../../features/employee/daily_schedule/presentation/screens/employee_daily_schedule_screen.dart';
+import '../../features/employee/roster/presentation/screens/employee_roster_screen.dart';
+import '../../features/employee/roster/presentation/view_models/employee_roster_view_model.dart';
 import '../../features/driver/shell/driver_shell.dart';
 import '../../features/driver/my_trip/presentation/bloc/driver_trip_bloc.dart';
 import '../../features/driver/my_trip/presentation/screens/driver_home_screen.dart';
@@ -43,6 +49,10 @@ import '../../features/driver/stats/presentation/screens/driver_stats_screen.dar
 import '../../features/employee/profile/presentation/screens/employee_profile_screen.dart';
 import '../../features/corporate_admin/employees/presentation/screens/corp_employees_screen.dart';
 import '../../features/corporate_admin/employees/presentation/view_models/corp_employees_view_model.dart';
+import '../../features/corporate_admin/profile/presentation/screens/corp_admin_profile_screen.dart';
+import '../../features/corporate_admin/profile/presentation/view_models/corp_admin_profile_view_model.dart';
+import '../../features/corporate_admin/schedules/presentation/corp_admin_schedules_screen.dart';
+import '../../features/corporate_admin/schedules/presentation/corp_admin_schedules_view_model.dart';
 import '../di/injection.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
@@ -170,6 +180,11 @@ GoRouter createRouter(AuthBloc authBloc) {
               child: const DocumentsScreen(),
             ),
           ),
+          GoRoute(
+            name: AppRoutes.fleetLiveMap,
+            path: AppRoutes.fleetLiveMapPath,
+            builder: (_, __) => const LiveMapScreen(),
+          ),
         ],
       ),
 
@@ -202,7 +217,7 @@ GoRouter createRouter(AuthBloc authBloc) {
           GoRoute(
             name: AppRoutes.employeeDailySchedule,
             path: AppRoutes.employeeDailySchedulePath,
-            builder: (_, __) => const EmployeeDailyScheduleScreen(),
+            builder: (_, __) => EmployeeRosterScreen(viewModel: getIt<EmployeeRosterViewModel>()),
           ),
           GoRoute(
             name: AppRoutes.employeeProfile,
@@ -222,14 +237,14 @@ GoRouter createRouter(AuthBloc authBloc) {
           GoRoute(
             name: AppRoutes.corpAdminBookings,
             path: AppRoutes.corpAdminBookingsPath,
-            builder: (_, __) => const BookingsScreen(),
+            builder: (_, __) => const CorpAdminBookingsScreen(),
           ),
           GoRoute(
             name: AppRoutes.corpAdminInvoices,
             path: AppRoutes.corpAdminInvoicesPath,
             builder: (_, __) => BlocProvider(
               create: (_) => getIt<InvoiceBloc>(),
-              child: const InvoicesScreen(),
+              child: const CorpAdminInvoicesScreen(),
             ),
           ),
           GoRoute(
@@ -237,7 +252,7 @@ GoRouter createRouter(AuthBloc authBloc) {
             path: AppRoutes.corpAdminReportsPath,
             builder: (_, __) => BlocProvider(
               create: (_) => getIt<ReportBloc>(),
-              child: const ReportsScreen(),
+              child: const CorpAdminReportsScreen(),
             ),
           ),
           GoRoute(
@@ -245,6 +260,20 @@ GoRouter createRouter(AuthBloc authBloc) {
             path: AppRoutes.corpAdminEmployeesPath,
             builder: (_, __) => CorpEmployeesScreen(
               viewModel: getIt<CorpEmployeesViewModel>(),
+            ),
+          ),
+          GoRoute(
+            name: AppRoutes.corpAdminProfile,
+            path: AppRoutes.corpAdminProfilePath,
+            builder: (_, __) => CorpAdminProfileScreen(
+              viewModel: getIt<CorpAdminProfileViewModel>(),
+            ),
+          ),
+          GoRoute(
+            name: AppRoutes.corpAdminSchedules,
+            path: AppRoutes.corpAdminSchedulesPath,
+            builder: (_, __) => CorpAdminSchedulesScreen(
+              viewModel: getIt<CorpAdminSchedulesViewModel>(),
             ),
           ),
         ],
