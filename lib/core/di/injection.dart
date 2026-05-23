@@ -38,7 +38,6 @@ import 'package:cruzo/features/fleet_manager/daily_schedules/presentation/bloc/d
 import '../theme/theme_service.dart';
 import '../maps/map_service.dart';
 import '../maps/google/google_map_service.dart';
-import 'package:cruzo/features/fleet_manager/live_map/data/live_map_repository.dart';
 import 'package:cruzo/features/employee/daily_schedule/data/employee_schedule_repository.dart';
 import 'package:cruzo/features/employee/daily_schedule/domain/employee_schedule_repo.dart';
 import 'package:cruzo/features/employee/daily_schedule/presentation/bloc/employee_schedule_bloc.dart';
@@ -92,9 +91,6 @@ void setupDI() {
   // Maps
   getIt.registerLazySingleton<MapService>(() => GoogleMapService());
   getIt.registerLazySingleton<GoogleMapService>(() => GoogleMapService());
-
-  // Fleet Manager — Live Map
-  getIt.registerLazySingleton<LiveMapRepository>(() => LiveMapRepository(getIt<Dio>()));
 
   // Auth
   getIt.registerLazySingleton<AuthRepository>(

@@ -26,9 +26,6 @@ abstract final class AppRoutes {
   static const fleetDocumentsPath = '/fleet/documents';
   static const fleetReports = 'fleet-reports';
   static const fleetReportsPath = '/fleet/reports';
-  static const fleetLiveMap = 'fleet-live-map';
-  static const fleetLiveMapPath = '/fleet/live-map';
-
   // Employee
   static const employeeHome = 'employee-home';
   static const employeeHomePath = '/employee/home';

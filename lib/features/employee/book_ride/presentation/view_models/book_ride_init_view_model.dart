@@ -8,7 +8,10 @@ class BookRideInitViewModel extends ChangeNotifier {
   BookRideInitData? _data;
 
   bool _isLoading = false;
+  String? _error;
+
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   String? get corporateClientId => _data?.corporateClientId;
   double? get maxBookingValue => _data?.maxBookingValue;
@@ -16,11 +19,15 @@ class BookRideInitViewModel extends ChangeNotifier {
 
   Future<void> load() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
       _data = await _repository.fetchInitData();
-    } catch (_) {
-      _data = const BookRideInitData();
+      if (_data?.corporateClientId == null) {
+        _error = 'Account not linked to a corporate client. Contact your administrator.';
+      }
+    } catch (e) {
+      _error = 'Failed to load booking details. Please try again.';
     } finally {
       _isLoading = false;
       notifyListeners();

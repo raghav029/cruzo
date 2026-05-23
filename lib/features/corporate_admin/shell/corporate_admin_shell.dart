@@ -10,12 +10,14 @@ import '../../../core/di/injection.dart';
 import '../../../shared/widgets/change_password_sheet.dart';
 import '../../../shared/widgets/edit_employee_profile_sheet.dart';
 import '../../employee/profile/data/repositories/employee_profile_repository.dart';
+import '../bookings/pending_count_notifier.dart';
 
 const _kCorpNav = [
   (id: 'bookings', label: 'Bookings', icon: Icons.book_online_rounded, route: AppRoutes.corpAdminBookingsPath),
   (id: 'invoices', label: 'Invoices', icon: Icons.receipt_long_rounded, route: AppRoutes.corpAdminInvoicesPath),
   (id: 'reports', label: 'Reports', icon: Icons.bar_chart_rounded, route: AppRoutes.corpAdminReportsPath),
   (id: 'employees', label: 'Employees', icon: Icons.people_rounded, route: AppRoutes.corpAdminEmployeesPath),
+  (id: 'schedules', label: 'Schedules', icon: Icons.calendar_month_rounded, route: AppRoutes.corpAdminSchedulesPath),
 ];
 
 class CorporateAdminShell extends StatelessWidget {
@@ -93,10 +95,34 @@ class _Topbar extends StatelessWidget {
   }
 }
 
-class _Sidebar extends StatelessWidget {
+class _Sidebar extends StatefulWidget {
+  @override
+  State<_Sidebar> createState() => _SidebarState();
+}
+
+class _SidebarState extends State<_Sidebar> {
+  late final PendingBookingsCountNotifier _notifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifier = getIt<PendingBookingsCountNotifier>();
+    _notifier.refresh();
+    _notifier.addListener(_onCountChanged);
+  }
+
+  void _onCountChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    _notifier.removeListener(_onCountChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
+    final pendingCount = _notifier.count;
     return Container(
       width: 220,
       color: AppColors.darkBg0,
@@ -140,6 +166,7 @@ class _Sidebar extends StatelessWidget {
               item: item,
               isActive: location.startsWith(item.route),
               onTap: () => context.go(item.route),
+              badgeCount: item.id == 'bookings' ? pendingCount : 0,
             ),
           const Spacer(),
           const Divider(color: AppColors.darkLine, height: 1),
@@ -170,8 +197,14 @@ class _NavItem extends StatelessWidget {
   final ({String id, String label, IconData icon, String route}) item;
   final bool isActive;
   final VoidCallback onTap;
+  final int badgeCount;
 
-  const _NavItem({required this.item, required this.isActive, required this.onTap});
+  const _NavItem({
+    required this.item,
+    required this.isActive,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -187,9 +220,13 @@ class _NavItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(item.icon,
-                size: 16,
-                color: isActive ? AppColors.accent : AppColors.darkFg3),
+            Badge(
+              isLabelVisible: badgeCount > 0,
+              label: Text('$badgeCount'),
+              child: Icon(item.icon,
+                  size: 16,
+                  color: isActive ? AppColors.accent : AppColors.darkFg3),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Text(item.label,
                 style: AppTextStyles.body.copyWith(
@@ -246,19 +283,43 @@ class _EditProfileTile extends StatelessWidget {
 
 // ── Mobile ────────────────────────────────────────────────────────────────────
 
-class _MobileShell extends StatelessWidget {
+class _MobileShell extends StatefulWidget {
   final Widget child;
   const _MobileShell({required this.child});
+
+  @override
+  State<_MobileShell> createState() => _MobileShellState();
+}
+
+class _MobileShellState extends State<_MobileShell> {
+  late final PendingBookingsCountNotifier _notifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifier = getIt<PendingBookingsCountNotifier>();
+    _notifier.refresh();
+    _notifier.addListener(_onCountChanged);
+  }
+
+  void _onCountChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    _notifier.removeListener(_onCountChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final currentIndex =
         _kCorpNav.indexWhere((e) => location.startsWith(e.route)).clamp(0, _kCorpNav.length - 1);
+    final pendingCount = _notifier.count;
 
     return Scaffold(
       backgroundColor: AppColors.darkBg1,
-      body: child,
+      body: widget.child,
       bottomNavigationBar: NavigationBar(
         backgroundColor: AppColors.darkBg0,
         indicatorColor: AppColors.accent.withAlpha(40),
@@ -266,8 +327,16 @@ class _MobileShell extends StatelessWidget {
         onDestinationSelected: (i) => context.go(_kCorpNav[i].route),
         destinations: _kCorpNav
             .map((e) => NavigationDestination(
-                  icon: Icon(e.icon, color: AppColors.darkFg3),
-                  selectedIcon: Icon(e.icon, color: AppColors.accent),
+                  icon: Badge(
+                    isLabelVisible: e.id == 'bookings' && pendingCount > 0,
+                    label: Text('$pendingCount'),
+                    child: Icon(e.icon, color: AppColors.darkFg3),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: e.id == 'bookings' && pendingCount > 0,
+                    label: Text('$pendingCount'),
+                    child: Icon(e.icon, color: AppColors.accent),
+                  ),
                   label: e.label,
                 ))
             .toList(),

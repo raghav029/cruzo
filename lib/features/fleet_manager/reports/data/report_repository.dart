@@ -27,7 +27,7 @@ class ReportRepoImpl implements ReportRepo {
 
   @override
   Future<ApiResult<CorporateSpend>> corporateSpend({
-    required String corporateClientId,
+    String? corporateClientId,
     String? fromDate,
     String? toDate,
   }) =>
@@ -35,7 +35,7 @@ class ReportRepoImpl implements ReportRepo {
         final resp = await _dio.get(
           ReportEndpoints.corporateSpend,
           queryParameters: {
-            'corporateClientId': corporateClientId,
+            if (corporateClientId != null) 'corporateClientId': corporateClientId,
             if (fromDate != null) 'fromDate': fromDate,
             if (toDate != null) 'toDate': toDate,
           },

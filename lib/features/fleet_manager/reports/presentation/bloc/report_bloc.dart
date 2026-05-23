@@ -43,7 +43,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     switch (result) {
       case Success(:final value):
         emit(CorporateSpendLoaded(value,
-            corporateClientId: event.corporateClientId,
+            corporateClientId: event.corporateClientId ?? '',
             fromDate: event.fromDate,
             toDate: event.toDate));
       case Failure(:final message):

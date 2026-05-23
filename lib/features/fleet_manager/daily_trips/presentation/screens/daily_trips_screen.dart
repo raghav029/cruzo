@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/dls/dls.dart';
@@ -740,6 +741,38 @@ class _DetailPanel extends StatefulWidget {
 }
 
 class _DetailPanelState extends State<_DetailPanel> {
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPollingIfLive();
+  }
+
+  void _startPollingIfLive() {
+    _pollTimer?.cancel();
+    if (widget.booking.statusEnum == BookingStatus.inProgress) {
+      _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+        widget.onRefresh();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(_DetailPanel old) {
+    super.didUpdateWidget(old);
+    if (old.booking.id != widget.booking.id ||
+        old.booking.statusEnum != widget.booking.statusEnum) {
+      _startPollingIfLive();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final b = widget.booking;

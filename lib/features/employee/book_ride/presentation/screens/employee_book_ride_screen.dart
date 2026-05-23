@@ -139,7 +139,32 @@ class _EmployeeBookRideScreenState extends State<EmployeeBookRideScreen> {
       child: Scaffold(
         backgroundColor: AppColors.darkBg1,
         body: SafeArea(
-          child: CustomScrollView(
+          child: _initVm.isLoading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              : _initVm.error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline, color: AppColors.bad, size: 48),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              _initVm.error!,
+                              style: AppTextStyles.body.copyWith(color: AppColors.darkFg2),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            TextButton(
+                              onPressed: _initVm.load,
+                              child: Text('Retry', style: AppTextStyles.body.copyWith(color: AppColors.accent)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(

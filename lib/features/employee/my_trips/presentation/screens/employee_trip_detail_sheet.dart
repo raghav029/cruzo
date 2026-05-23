@@ -463,6 +463,7 @@ class _CancelButtonState extends State<_CancelButton> {
   }
 
   void _confirmCancel(BuildContext context) {
+    final reasonCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -471,9 +472,39 @@ class _CancelButtonState extends State<_CancelButton> {
           'Cancel Booking',
           style: AppTextStyles.h3.copyWith(color: AppColors.darkFg0),
         ),
-        content: Text(
-          'Are you sure you want to cancel this booking?',
-          style: AppTextStyles.body.copyWith(color: AppColors.darkFg1),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to cancel this booking?',
+              style: AppTextStyles.body.copyWith(color: AppColors.darkFg1),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: reasonCtrl,
+              style: AppTextStyles.body.copyWith(color: AppColors.darkFg0),
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: 'Reason (optional)',
+                hintStyle: AppTextStyles.bodySm.copyWith(color: AppColors.darkFg3),
+                filled: true,
+                fillColor: AppColors.darkBg1,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.darkLine),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.darkLine),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.accent),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -486,9 +517,13 @@ class _CancelButtonState extends State<_CancelButton> {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.bad),
             onPressed: () {
+              final reason = reasonCtrl.text.trim();
               Navigator.pop(dialogCtx);
               context.read<BookingBloc>().add(
-                BookingCancelRequested(widget.booking.id),
+                BookingCancelRequested(
+                  widget.booking.id,
+                  reason: reason.isEmpty ? null : reason,
+                ),
               );
             },
             child: const Text('Cancel Booking'),

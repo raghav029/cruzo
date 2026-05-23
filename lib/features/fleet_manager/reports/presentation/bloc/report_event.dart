@@ -9,11 +9,11 @@ class FleetSummaryRequested extends ReportEvent {
 }
 
 class CorporateSpendRequested extends ReportEvent {
-  final String corporateClientId;
+  final String? corporateClientId;
   final String? fromDate;
   final String? toDate;
   const CorporateSpendRequested({
-    required this.corporateClientId,
+    this.corporateClientId,
     this.fromDate,
     this.toDate,
   });

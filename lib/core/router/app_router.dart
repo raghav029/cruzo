@@ -6,7 +6,6 @@ import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_state.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/fleet_manager/shell/fleet_shell.dart';
-import '../../features/fleet_manager/live_map/presentation/screens/live_map_screen.dart';
 import '../../features/fleet_manager/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/fleet_manager/vehicles/presentation/screens/vehicles_screen.dart';
 import '../../features/fleet_manager/vehicles/presentation/bloc/vehicle_bloc.dart';
@@ -179,11 +178,6 @@ GoRouter createRouter(AuthBloc authBloc) {
               create: (_) => getIt<DocumentExpiryBloc>(),
               child: const DocumentsScreen(),
             ),
-          ),
-          GoRoute(
-            name: AppRoutes.fleetLiveMap,
-            path: AppRoutes.fleetLiveMapPath,
-            builder: (_, __) => const LiveMapScreen(),
           ),
         ],
       ),

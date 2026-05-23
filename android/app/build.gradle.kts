@@ -32,7 +32,7 @@ android {
         create("employee") {
             dimension = "app"
             applicationId = "com.cruzo.employee"
-            resValue("string", "app_name", "Cruzo")
+            resValue("string", "app_name", "cruzo_employee")
         }
         create("driver") {
             dimension = "app"

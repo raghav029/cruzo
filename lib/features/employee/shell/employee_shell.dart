@@ -75,7 +75,7 @@ class EmployeeShell extends StatelessWidget {
             BottomNavigationBarItem(
               icon: Icon(Icons.directions_bus_outlined),
               activeIcon: Icon(Icons.directions_bus_rounded),
-              label: 'Schedule',
+              label: 'Roster',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),

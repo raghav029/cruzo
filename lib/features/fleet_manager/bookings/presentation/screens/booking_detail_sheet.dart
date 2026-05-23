@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/auth/bloc/auth_bloc.dart';
-import '../../../../../core/auth/bloc/auth_state.dart';
+import '../../../../../core/auth/current_user_ext.dart';
 import '../../../../../core/di/injection.dart';
 import '../../../../../core/theme/dls/dls.dart';
 import '../../../../../shared/widgets/booking_map_card.dart';
@@ -194,8 +193,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet> {
                     const SizedBox(height: 16),
                     _StatusTimeline(booking: _booking),
                     if (widget.openAssign && _booking.isApproved &&
-                        context.read<AuthBloc>().state is AuthAuthenticated &&
-                        (context.read<AuthBloc>().state as AuthAuthenticated).role == AppRole.fleetManager) ...[
+                        context.isFleetManager) ...[
                       const SizedBox(height: 20),
                       _AssignDriverPanel(booking: _booking),
                     ],
@@ -439,10 +437,6 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthBloc>().state;
-    final isFleetManager = auth is AuthAuthenticated &&
-        auth.role == AppRole.fleetManager;
-
     if (booking.isPending) {
       return Row(
         children: [
@@ -524,7 +518,7 @@ class _ActionButtons extends StatelessWidget {
       );
     }
 
-    if (booking.isApproved && isFleetManager) {
+    if (booking.isApproved && context.isFleetManager) {
       return Column(
         children: [
           SizedBox(

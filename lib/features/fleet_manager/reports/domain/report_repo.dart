@@ -8,7 +8,7 @@ abstract class ReportRepo {
   });
 
   Future<ApiResult<CorporateSpend>> corporateSpend({
-    required String corporateClientId,
+    String? corporateClientId,
     String? fromDate,
     String? toDate,
   });

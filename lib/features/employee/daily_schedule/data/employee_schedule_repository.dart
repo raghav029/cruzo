@@ -37,12 +37,47 @@ class EmployeeScheduleRepoImpl implements EmployeeScheduleRepo {
   }
 
   @override
+  Future<ApiResult<List<EmployeeTrip>>> getScheduleForMonth(
+      DateTime from, DateTime to) async {
+    return executeRetrofitCall<List<EmployeeTrip>>(() async {
+      String fmt(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      final resp = await _dio.get('$_base/my-schedule',
+          queryParameters: {'from': fmt(from), 'to': fmt(to)});
+      final items = (resp.data['data'] as List? ?? [])
+          .map((e) => EmployeeTrip.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return items;
+    }, url: '$_base/my-schedule');
+  }
+
+  @override
+  Future<ApiResult<List<String>>> getSkipDates(String passengerId) async {
+    return executeRetrofitCall<List<String>>(() async {
+      final resp =
+          await _dio.get('$_base/enrollments/$passengerId/skips');
+      final items = (resp.data['data'] as List? ?? resp.data as List? ?? []);
+      return items
+          .map((e) => (e['skipDate'] ?? e['date'] ?? '') as String)
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }, url: '$_base/enrollments/$passengerId/skips');
+  }
+
+  @override
   Future<ApiResult<void>> skipDay(String passengerId, String date) async {
     return executeRetrofitCall<void>(() async {
       await _dio.post(
         '$_base/enrollments/$passengerId/skip',
-        data: {'skipDate': date},
+        queryParameters: {'date': date},
       );
     }, url: '$_base/enrollments/$passengerId/skip');
+  }
+
+  @override
+  Future<ApiResult<void>> undoSkip(String passengerId, String date) async {
+    return executeRetrofitCall<void>(() async {
+      await _dio.delete('$_base/enrollments/$passengerId/skip/$date');
+    }, url: '$_base/enrollments/$passengerId/skip/$date');
   }
 }

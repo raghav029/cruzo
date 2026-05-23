@@ -25,6 +25,10 @@ class AuthRepository {
       final name = (data['fullName'] ?? data['name'] ?? '') as String;
 
       await _storage.saveToken(token);
+      final refreshToken = data['refreshToken'] as String?;
+      if (refreshToken != null) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
       await _storage.saveUserInfo(
         role: data['role'],
         userId: userId,

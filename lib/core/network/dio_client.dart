@@ -46,11 +46,40 @@ class _AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     final statusCode = err.response?.statusCode;
     if (statusCode == 401) {
-      if (getIt.isRegistered<AuthBloc>()) {
-        getIt<AuthBloc>().add(const AuthLogoutRequested());
+      final refreshToken = await _storage.getRefreshToken();
+      if (refreshToken != null) {
+        try {
+          final refreshDio = Dio(BaseOptions(
+            baseUrl: Env.apiBaseUrl,
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
+            headers: {'Content-Type': 'application/json'},
+          ));
+          final resp = await refreshDio.post(
+            '/api/auth/refresh',
+            data: {'refreshToken': refreshToken},
+          );
+          final data = resp.data['data'] as Map<String, dynamic>;
+          final newToken = data['token'] as String;
+          final newRefresh = data['refreshToken'] as String?;
+          await _storage.saveToken(newToken);
+          if (newRefresh != null) await _storage.saveRefreshToken(newRefresh);
+          final opts = err.requestOptions;
+          opts.headers['Authorization'] = 'Bearer $newToken';
+          final retryResp = await refreshDio.fetch(opts);
+          return handler.resolve(retryResp);
+        } catch (_) {
+          if (getIt.isRegistered<AuthBloc>()) {
+            getIt<AuthBloc>().add(const AuthLogoutRequested());
+          }
+        }
+      } else {
+        if (getIt.isRegistered<AuthBloc>()) {
+          getIt<AuthBloc>().add(const AuthLogoutRequested());
+        }
       }
     }
     handler.next(err);
